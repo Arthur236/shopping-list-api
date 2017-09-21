@@ -132,7 +132,7 @@ class ShoppingListItem(db.Model):
         """
         This method gets all the shopping list items for a given list
         """
-        return ShoppingListtem.query.filter_by(list_id=list_id)
+        return ShoppingListItem.query.filter_by(list_id=list_id)
 
     def delete(self):
         """
