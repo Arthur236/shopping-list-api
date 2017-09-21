@@ -68,7 +68,7 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(result['message'], "You logged in successfully.")
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
-        self.assertTrue(result['access_token'])
+        self.assertTrue(result['access-token'])
 
     def test_non_registered_user_login(self):
         """
