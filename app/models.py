@@ -125,7 +125,7 @@ class ShoppingList(db.Model):
         """
         Deletes a given shopping list
         """
-        db.session.delete(id)
+        db.session.delete(self)
         db.session.commit()
 
     def __repr__(self):

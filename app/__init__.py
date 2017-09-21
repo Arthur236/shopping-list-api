@@ -41,13 +41,12 @@ def create_app(config_name):
                 return jsonify({'message': 'Token is missing!'}), 401
 
             try:
-                data = jwt.decode(token, current_app.config.get('SECRET'))
-                current_user = User.query.filter_by(username=data['username']).first()
+                user_id = User.decode_token(token)
             except:
                 return jsonify({'message': 'Token is invalid!'}), 401
 
             # Pass user object to the route
-            return f(current_user, *args, **kwargs)
+            return f(user_id, *args, **kwargs)
 
         return decorated
 
@@ -134,7 +133,8 @@ def create_app(config_name):
                 return make_response(jsonify(response)), 500
 
     @app.route('/shopping_lists', methods=['POST', 'GET'])
-    def shopping_list():
+    @token_required
+    def shopping_list(user_id):
         if request.method == "POST":
             name = str(request.data.get('name', ''))
             description = str(request.data.get('description', ''))
@@ -145,13 +145,14 @@ def create_app(config_name):
                     }
                     return make_response(jsonify(response)), 400
 
-                s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
+                s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower(),
+                                                          ShoppingList.user_id == user_id).first()
 
                 if not s_list:
                     # There is no list so we'll try to create it
                     try:
 
-                        shopping_list = ShoppingList(user_id=2, name=name, description=description)
+                        shopping_list = ShoppingList(user_id=user_id, name=name, description=description)
                         shopping_list.save()
 
                         response = jsonify({
@@ -177,7 +178,7 @@ def create_app(config_name):
                     return make_response(jsonify(response)), 401
         else:
             # GET
-            shopping_list = ShoppingList.get_all(user_id=2)
+            shopping_list = ShoppingList.get_all(user_id=user_id)
             results = []
 
             for shopping_list in shopping_list:
@@ -193,26 +194,34 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/shopping_list/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-    def shopping_list_manipulation(id, **kwargs):
+    @app.route('/shopping_list/<list_id>', methods=['GET'])
+    @token_required
+    def get_shopping_list(user_id, list_id):
         # retrieve a shopping list using it's id
-        shopping_list = ShoppingList.query.filter_by(id=id).first()
-        if not shopping_list:
-            # Raise an HTTPException with a 404 not found status code
-            abort(404)
+        shopping_list = ShoppingList.query.filter_by(id=list_id).first()
 
-        if request.method == 'DELETE':
-            if shopping_list.user_id == 2:
-                shopping_list.delete()
-                return {
-                           "message": "Shopping list {} deleted successfully".format(shopping_list.id)
-                       }, 200
-            else:
-                return {
-                           "message": "You do not have permissions to delete that shopping list"
-                       }, 401
+        if shopping_list.user_id == user_id:
+            response = jsonify({
+                'id': shopping_list.id,
+                'name': shopping_list.name,
+                'description': shopping_list.description,
+                'date_created': shopping_list.date_created,
+                'date_modified': shopping_list.date_modified
+            })
+            response.status_code = 200
+            return response
+        else:
+            return {
+                       "message": "You do not have permissions to view that shopping list"
+                   }, 401
 
-        elif request.method == 'PUT':
+    @app.route('/shopping_list/<list_id>', methods=['PUT'])
+    @token_required
+    def edit_shopping_list(user_id, list_id):
+        # retrieve a shopping list using it's id
+        shopping_list = ShoppingList.query.filter_by(id=list_id).first()
+
+        if request.method == 'PUT':
             name = str(request.data.get('name', ''))
             description = str(request.data.get('description', ''))
 
@@ -224,40 +233,60 @@ def create_app(config_name):
 
             s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
 
+            # There is no list so we'll try to create it
             if not s_list:
-                # There is no list so we'll try to create it
-                try:
+                # Check if user is owner
+                if shopping_list.user_id == user_id:
+                    try:
 
-                    shopping_list.name = name
-                    shopping_list.description = description
-                    shopping_list.save()
+                        shopping_list.name = name
+                        shopping_list.description = description
+                        shopping_list.save()
 
-                    response = jsonify({
-                        'id': shopping_list.id,
-                        'name': shopping_list.name,
-                        'description': shopping_list.description,
-                        'date_created': shopping_list.date_created,
-                        'date_modified': shopping_list.date_modified
-                    })
-                    response.status_code = 200
-                    return response
+                        response = jsonify({
+                            'id': shopping_list.id,
+                            'name': shopping_list.name,
+                            'description': shopping_list.description,
+                            'date_created': shopping_list.date_created,
+                            'date_modified': shopping_list.date_modified
+                        })
+                        response.status_code = 200
+                        return response
 
-                except Exception as e:
-                    # An error occurred, therefore return a string message containing the error
-                    response = {
-                        'message': str(e)
-                    }
-                    return make_response(jsonify(response)), 401
-        else:
-            # GET
-            response = jsonify({
-                'id': shopping_list.id,
-                'name': shopping_list.name,
-                'description': shopping_list.description,
-                'date_created': shopping_list.date_created,
-                'date_modified': shopping_list.date_modified
-            })
-            response.status_code = 200
-            return response
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {
+                            'message': str(e)
+                        }
+                        return make_response(jsonify(response)), 401
+                else:
+                    return {
+                               "message": "You do not have permissions to edit that shopping list"
+                           }, 401
+            else:
+                return {
+                           "message": "Shopping list already exists"
+                       }, 401
+
+    @app.route('/shopping_list/<list_id>', methods=['DELETE'])
+    @token_required
+    def delete_shopping_list(user_id, list_id):
+        # retrieve a shopping list using it's id
+        shopping_list = ShoppingList.query.filter_by(id=list_id).first()
+
+        if not shopping_list:
+            # Raise an HTTPException with a 404 not found status code
+            abort(404)
+
+        if request.method == 'DELETE':
+            if shopping_list.user_id == user_id:
+                shopping_list.delete()
+                return {
+                           "message": "Shopping list {} deleted successfully".format(shopping_list.id)
+                       }, 200
+            else:
+                return {
+                           "message": "You do not have permissions to delete that shopping list"
+                       }, 401
 
     return app
