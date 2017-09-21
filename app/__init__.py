@@ -4,6 +4,8 @@ Initialing the application
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
 from flask import request, jsonify, abort, make_response
+import re
+from sqlalchemy import func
 
 # local import
 from instance.config import app_config
@@ -21,12 +23,26 @@ def create_app(config_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
-    @app.route('/auth/register/', methods=['POST'])
+    @app.route('/auth/register', methods=['POST'])
     def register():
         if request.method == "POST":
             username = str(request.data.get('username', ''))
+            password = str(request.data.get('password', ''))
+
             if username:
-                user = User.query.filter_by(username=username).first()
+                if not re.match("^[a-zA-Z0-9_]*$", username):
+                    response = {
+                        'message': 'The username cannot contain special characters. Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                if len(password) < 6:
+                    response = {
+                        'message': 'The password should be at least 6 characters long'
+                    }
+                    return make_response(jsonify(response)), 400
+                
+                user = models.User.query.filter(func.lower(User.username) == username.lower()).first()
                 if not user:
                     # There is no user so we'll try to register them
                     try:
@@ -57,7 +73,7 @@ def create_app(config_name):
 
                     return make_response(jsonify(response)), 202
 
-    @app.route('/auth/login/', methods=['POST'])
+    @app.route('/auth/login', methods=['POST'])
     def login():
         if request.method == "POST":
             try:
@@ -85,7 +101,7 @@ def create_app(config_name):
                 # Return a server error using the HTTP Error Code 500 (Internal Server Error)
                 return make_response(jsonify(response)), 500
 
-    @app.route('/shopping_lists/', methods=['POST', 'GET'])
+    @app.route('/shopping_lists', methods=['POST', 'GET'])
     def shopping_list():
         if request.method == "POST":
             name = str(request.data.get('name', ''))
