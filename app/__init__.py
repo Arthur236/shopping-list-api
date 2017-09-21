@@ -3,9 +3,11 @@ Initialing the application
 """
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
-from flask import request, jsonify, abort, make_response
+from flask import request, jsonify, abort, make_response, current_app
 import re
 from sqlalchemy import func
+import jwt
+from functools import wraps
 
 # local import
 from instance.config import app_config
@@ -22,6 +24,32 @@ def create_app(config_name):
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
+
+    def token_required(f):
+        """
+        Token decorator method
+        """
+        @wraps(f)
+        def decorated(*args, **kwargs):
+            token = None
+
+            # Check if header token exists
+            if 'x-access-token' in request.headers:
+                token = request.headers['x-access-token']
+
+            if not token:
+                return jsonify({'message': 'Token is missing!'}), 401
+
+            try:
+                data = jwt.decode(token, current_app.config.get('SECRET'))
+                current_user = User.query.filter_by(username=data['username']).first()
+            except:
+                return jsonify({'message': 'Token is invalid!'}), 401
+
+            # Pass user object to the route
+            return f(current_user, *args, **kwargs)
+
+        return decorated
 
     @app.route('/auth/register', methods=['POST'])
     def register():
@@ -82,10 +110,14 @@ def create_app(config_name):
                     user = User.query.filter_by(username=username).first()
                     # Try to authenticate the found user using their password
                     if user and user.password_is_valid(request.data['password']):
-                        response = {
-                            'message': 'You logged in successfully.'
-                        }
-                        return make_response(jsonify(response)), 200
+                        # Generate the access token. This will be used as the authorization header
+                        token = user.generate_token(user.id)
+                        if token:
+                            response = {
+                                'access-token': token.decode(),
+                                'message': 'You logged in successfully.'
+                            }
+                            return make_response(jsonify(response)), 200
                     else:
                         # User does not exist. Therefore, we return an error message
                         response = {
@@ -107,7 +139,7 @@ def create_app(config_name):
             name = str(request.data.get('name', ''))
             description = str(request.data.get('description', ''))
             if name:
-                if not re.match("^[a-zA-Z0-9_]*$", name):
+                if not re.match("^[a-zA-Z0-9 _]*$", name):
                     response = {
                         'message': 'The list name cannot contain special characters. Only underscores'
                     }
@@ -161,66 +193,71 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-        @app.route('/shopping_list/<int:id>', methods=['GET', 'PUT', 'DELETE'])
-        def shopping_list_manipulation(id, **kwargs):
-            # retrieve a shopping list using it's id
-            shopping_list = ShoppingList.query.filter_by(id=id).first()
-            if not shopping_list:
-                # Raise an HTTPException with a 404 not found status code
-                abort(404)
+    @app.route('/shopping_list/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+    def shopping_list_manipulation(id, **kwargs):
+        # retrieve a shopping list using it's id
+        shopping_list = ShoppingList.query.filter_by(id=id).first()
+        if not shopping_list:
+            # Raise an HTTPException with a 404 not found status code
+            abort(404)
 
-            if request.method == 'DELETE':
+        if request.method == 'DELETE':
+            if shopping_list.user_id == 2:
                 shopping_list.delete()
                 return {
                            "message": "Shopping list {} deleted successfully".format(shopping_list.id)
                        }, 200
-
-            elif request.method == 'PUT':
-                name = str(request.data.get('name', ''))
-                description = str(request.data.get('description', ''))
-
-                if not re.match("^[a-zA-Z0-9_]*$", name):
-                    response = {
-                        'message': 'The list name cannot contain special characters. Only underscores'
-                    }
-                    return make_response(jsonify(response)), 400
-
-                s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
-
-                if not s_list:
-                    # There is no list so we'll try to create it
-                    try:
-
-                        shopping_list.name = name
-                        shopping_list.description = description
-                        shopping_list.save()
-
-                        response = jsonify({
-                            'id': shopping_list.id,
-                            'name': shopping_list.name,
-                            'description': shopping_list.description,
-                            'date_created': shopping_list.date_created,
-                            'date_modified': shopping_list.date_modified
-                        })
-                        response.status_code = 200
-                        return response
-
-                    except Exception as e:
-                        # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
-                        return make_response(jsonify(response)), 401
             else:
-                # GET
-                response = jsonify({
-                    'id': shopping_list.id,
-                    'name': shopping_list.name,
-                    'description': shopping_list.description,
-                    'date_created': shopping_list.date_created,
-                    'date_modified': shopping_list.date_modified
-                })
-                response.status_code = 200
-                return response
+                return {
+                           "message": "You do not have permissions to delete that shopping list"
+                       }, 401
+
+        elif request.method == 'PUT':
+            name = str(request.data.get('name', ''))
+            description = str(request.data.get('description', ''))
+
+            if not re.match("^[a-zA-Z0-9 _]*$", name):
+                response = {
+                    'message': 'The list name cannot contain special characters. Only underscores'
+                }
+                return make_response(jsonify(response)), 400
+
+            s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
+
+            if not s_list:
+                # There is no list so we'll try to create it
+                try:
+
+                    shopping_list.name = name
+                    shopping_list.description = description
+                    shopping_list.save()
+
+                    response = jsonify({
+                        'id': shopping_list.id,
+                        'name': shopping_list.name,
+                        'description': shopping_list.description,
+                        'date_created': shopping_list.date_created,
+                        'date_modified': shopping_list.date_modified
+                    })
+                    response.status_code = 200
+                    return response
+
+                except Exception as e:
+                    # An error occurred, therefore return a string message containing the error
+                    response = {
+                        'message': str(e)
+                    }
+                    return make_response(jsonify(response)), 401
+        else:
+            # GET
+            response = jsonify({
+                'id': shopping_list.id,
+                'name': shopping_list.name,
+                'description': shopping_list.description,
+                'date_created': shopping_list.date_created,
+                'date_modified': shopping_list.date_modified
+            })
+            response.status_code = 200
+            return response
 
     return app
