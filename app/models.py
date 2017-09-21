@@ -3,6 +3,9 @@ Database models
 """
 from app import db
 from flask_bcrypt import Bcrypt
+from flask import current_app
+import jwt
+from datetime import datetime, timedelta
 
 
 class User(db.Model):
@@ -39,6 +42,43 @@ class User(db.Model):
         """
         db.session.add(self)
         db.session.commit()
+
+    def generate_token(self, user_id):
+        """
+        Generates the access token
+        """
+        try:
+            # set up a payload with an expiration time
+            payload = {
+                'exp': datetime.utcnow() + timedelta(minutes=10),
+                'iat': datetime.utcnow(),
+                'sub': user_id
+            }
+            # create the byte string token using the payload and the SECRET key
+            jwt_string = jwt.encode(
+                payload,
+                current_app.config.get('SECRET'),
+                algorithm='HS256'
+            )
+            return jwt_string
+
+        except Exception as e:
+            # return an error in string format if an exception occurs
+            return str(e)
+
+    @staticmethod
+    def decode_token(token):
+        """Decodes the access token from the Authorization header."""
+        try:
+            # try to decode the token using our SECRET variable
+            payload = jwt.decode(token, current_app.config.get('SECRET'))
+            return payload['sub']
+        except jwt.ExpiredSignatureError:
+            # the token is expired, return an error string
+            return "Expired token. Please login to get a new token"
+        except jwt.InvalidTokenError:
+            # the token is invalid, return an error string
+            return "Invalid token. Please register or login"
 
 
 class ShoppingList(db.Model):
@@ -85,7 +125,7 @@ class ShoppingList(db.Model):
         """
         Deletes a given shopping list
         """
-        db.session.delete(self)
+        db.session.delete(id)
         db.session.commit()
 
     def __repr__(self):
@@ -134,7 +174,7 @@ class ShoppingListItem(db.Model):
         """
         return ShoppingListItem.query.filter_by(list_id=list_id)
 
-    def delete(self):
+    def delete(self, list_id):
         """
         Deletes a given shopping list item
         """
