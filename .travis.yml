@@ -1,6 +1,18 @@
 language: python
 python:
  - "3.6.1"
-install: pip install -r requirements.txt
-script: nosetests --with-coverage --cover-package=tests && coverage report
-after_success: coveralls
+# Install dependencies
+install:
+  - pip install -r requirements.txt
+  - pip install coveralls
+# Run tests
+script:
+  nosetests --with-coverage --cover-package=tests && coverage report
+after_success:
+  - coveralls
+services:
+  - postgresql
+before_script:
+  - psql -c 'create database shopping_list_test;' -U postgres
+addons:
+  postgresql: "9.6"
