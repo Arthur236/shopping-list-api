@@ -6,6 +6,7 @@ import os
 import json
 from app import create_app, db
 
+
 class ShoppingListTestCase(unittest.TestCase):
     """
     This class represents the shopping list test case
