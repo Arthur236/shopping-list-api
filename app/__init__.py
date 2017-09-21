@@ -107,20 +107,45 @@ def create_app(config_name):
             name = str(request.data.get('name', ''))
             description = str(request.data.get('description', ''))
             if name:
-                shopping_list = ShoppingList(1, name=name, description=description)
-                shopping_list.save()
-                response = jsonify({
-                    'id': shopping_list.id,
-                    'name': shopping_list.name,
-                    'description': shopping_list.description,
-                    'date_created': shopping_list.date_created,
-                    'date_modified': shopping_list.date_modified
-                })
-                response.status_code = 201
-                return response
+                if not re.match("^[a-zA-Z0-9_]*$", name):
+                    response = {
+                        'message': 'The list name cannot contain special characters. Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
+
+                if not s_list:
+                    # There is no list so we'll try to create it
+                    try:
+
+                        shopping_list = ShoppingList(user_id=2, name=name, description=description)
+                        shopping_list.save()
+
+                        response = jsonify({
+                            'id': shopping_list.id,
+                            'name': shopping_list.name,
+                            'description': shopping_list.description,
+                            'date_created': shopping_list.date_created,
+                            'date_modified': shopping_list.date_modified
+                        })
+                        response.status_code = 201
+                        return response
+
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {
+                            'message': str(e)
+                        }
+                        return make_response(jsonify(response)), 401
+                else:
+                    response = {
+                        'message': 'That shopping list already exists.'
+                    }
+                    return make_response(jsonify(response)), 401
         else:
             # GET
-            shopping_list = ShoppingList.get_all()
+            shopping_list = ShoppingList.get_all(user_id=2)
             results = []
 
             for shopping_list in shopping_list:
@@ -135,5 +160,67 @@ def create_app(config_name):
             response = jsonify(results)
             response.status_code = 200
             return response
+
+        @app.route('/shopping_list/<int:id>', methods=['GET', 'PUT', 'DELETE'])
+        def shopping_list_manipulation(id, **kwargs):
+            # retrieve a shopping list using it's id
+            shopping_list = ShoppingList.query.filter_by(id=id).first()
+            if not shopping_list:
+                # Raise an HTTPException with a 404 not found status code
+                abort(404)
+
+            if request.method == 'DELETE':
+                shopping_list.delete()
+                return {
+                           "message": "Shopping list {} deleted successfully".format(shopping_list.id)
+                       }, 200
+
+            elif request.method == 'PUT':
+                name = str(request.data.get('name', ''))
+                description = str(request.data.get('description', ''))
+
+                if not re.match("^[a-zA-Z0-9_]*$", name):
+                    response = {
+                        'message': 'The list name cannot contain special characters. Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
+
+                if not s_list:
+                    # There is no list so we'll try to create it
+                    try:
+
+                        shopping_list.name = name
+                        shopping_list.description = description
+                        shopping_list.save()
+
+                        response = jsonify({
+                            'id': shopping_list.id,
+                            'name': shopping_list.name,
+                            'description': shopping_list.description,
+                            'date_created': shopping_list.date_created,
+                            'date_modified': shopping_list.date_modified
+                        })
+                        response.status_code = 200
+                        return response
+
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {
+                            'message': str(e)
+                        }
+                        return make_response(jsonify(response)), 401
+            else:
+                # GET
+                response = jsonify({
+                    'id': shopping_list.id,
+                    'name': shopping_list.name,
+                    'description': shopping_list.description,
+                    'date_created': shopping_list.date_created,
+                    'date_modified': shopping_list.date_modified
+                })
+                response.status_code = 200
+                return response
 
     return app
