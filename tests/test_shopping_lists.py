@@ -18,7 +18,7 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         self.app = create_app(config_name="testing")
         self.client = self.app.test_client
-        self.shopping_list = {'name': 'Groceries', 'description': 'Description'}
+        self.shopping_list = {'name': 'Test List', 'description': 'Description'}
 
         # binds the app to the current context
         with self.app.app_context():
@@ -29,61 +29,61 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Test API can create a shopping list (POST request)
         """
-        res = self.client().post('/shopping_lists/', data=self.shopping_list)
+        res = self.client().post('/shopping_lists', data=self.shopping_list)
         self.assertEqual(res.status_code, 201)
-        self.assertIn('Groceries', str(res.data))
+        self.assertIn('Test List', str(res.data))
 
     def test_api_can_get_all_shopping_lists(self):
         """
         Test API can get a shopping list (GET request)
         """
-        res = self.client().post('/shopping_lists/', data=self.shopping_list)
+        res = self.client().post('/shopping_lists', data=self.shopping_list)
         self.assertEqual(res.status_code, 201)
-        res = self.client().get('/shopping_lists/')
+        res = self.client().get('/shopping_lists')
         self.assertEqual(res.status_code, 200)
-        self.assertIn('Groceries', str(res.data))
+        self.assertIn('Test List', str(res.data))
 
     def test_api_can_get_shopping_list_by_id(self):
         """
         Test API can get a single shopping list by using it's id
         """
-        rv = self.client().post('/shopping_lists/', data=self.shopping_list)
+        rv = self.client().post('/shopping_lists', data=self.shopping_list)
         self.assertEqual(rv.status_code, 201)
         result_in_json = json.loads(rv.data.decode('utf-8').replace("'", "\""))
         result = self.client().get(
-            '/shopping_lists/{}'.format(result_in_json['id']))
+            '/shopping_list/{}'.format(result_in_json['id']))
         self.assertEqual(result.status_code, 200)
-        self.assertIn('Groceries', str(result.data))
+        self.assertIn('Test List', str(result.data))
 
     def test_shopping_list_can_be_edited(self):
         """
         Test API can edit an existing shopping list. (PUT request)
         """
         rv = self.client().post(
-            '/shopping_lists/',
+            '/shopping_lists',
             data={'name': 'Electronics'})
         self.assertEqual(rv.status_code, 201)
         rv = self.client().put(
-            '/shopping_lists/1',
+            '/shopping_list/1',
             data={
-                "name": "Groceries"
+                "name": "Test List"
             })
         self.assertEqual(rv.status_code, 200)
-        results = self.client().get('/shopping_lists/1')
-        self.assertIn('Groceries', str(results.data))
+        results = self.client().get('/shopping_list/1')
+        self.assertIn('Test List', str(results.data))
 
     def test_shopping_list_deletion(self):
         """
         Test API can delete an existing shopping list. (DELETE request)
         """
         rv = self.client().post(
-            '/shopping_lists/',
-            data={'name': 'Groceries'})
+            '/shopping_lists',
+            data={'name': 'Test List'})
         self.assertEqual(rv.status_code, 201)
-        res = self.client().delete('/shopping_lists/1')
+        res = self.client().delete('/shopping_list/1')
         self.assertEqual(res.status_code, 200)
         # Test to see if it exists, should return a 404
-        result = self.client().get('/shopping_lists/1')
+        result = self.client().get('/shopping_list/1')
         self.assertEqual(result.status_code, 404)
 
     def tearDown(self):
@@ -94,6 +94,7 @@ class ShoppingListTestCase(unittest.TestCase):
             # drop all tables
             db.session.remove()
             db.drop_all()
+
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
