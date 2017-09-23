@@ -1,5 +1,5 @@
 """
-Test cases for shopping lists
+Test cases for shopping list items
 """
 import unittest
 import json
@@ -8,7 +8,7 @@ from app import create_app, db
 
 class ShoppingListTestCase(unittest.TestCase):
     """
-    This class represents the shopping list test case
+    This class represents the shopping list item test case
     """
 
     def setUp(self):
@@ -18,6 +18,8 @@ class ShoppingListTestCase(unittest.TestCase):
         self.app = create_app(config_name="testing")
         self.client = self.app.test_client
         self.shopping_list = {'name': 'Groceries', 'description': 'Description'}
+        self.shopping_list_item = {'list_id': 1, 'name': 'Tomatoes', 'quantity': 20,
+                                   'unit_price': 5}
 
         # binds the app to the current context
         with self.app.app_context():
@@ -40,9 +42,9 @@ class ShoppingListTestCase(unittest.TestCase):
         }
         return self.client().post('/auth/login', data=user_data)
 
-    def test_shopping_list_creation(self):
+    def test_item_creation(self):
         """
-        Test API can create a shopping list (POST request)
+        Test API can create a shopping list item (POST request)
         """
         # register a test user, then log them in
         self.register_user()
@@ -50,39 +52,21 @@ class ShoppingListTestCase(unittest.TestCase):
         access_token = json.loads(result.data.decode())['access-token']
 
         # create a shopping list by making a POST request
-        res = self.client().post(
-            '/shopping_lists',
-            headers={'x-access-token': access_token},
-            data=self.shopping_list)
-        self.assertEqual(res.status_code, 201)
-        self.assertIn('Groceries', str(res.data))
+        rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
+                                data=self.shopping_list)
+        # assert that the shopping list is created
+        self.assertEqual(rv.status_code, 201)
 
-    def test_api_can_get_all_shopping_lists(self):
-        """
-        Test API can get a shopping list (GET request)
-        """
-        self.register_user()
-        result = self.login_user()
-        access_token = json.loads(result.data.decode())['access-token']
-
-        # create a shopping list by making a POST request
-        res = self.client().post(
-            '/shopping_lists',
-            headers={'x-access-token': access_token},
-            data=self.shopping_list)
-        self.assertEqual(res.status_code, 201)
-
-        # get all the shopping lists that belong to the test user by making a GET request
-        res = self.client().get(
-            '/shopping_lists',
-            headers={'x-access-token': access_token},
-        )
+        # create shopping list item
+        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        # assert that the shopping list item is created
         self.assertEqual(res.status_code, 200)
-        self.assertIn('Groceries', str(res.data))
+        self.assertIn('Tomatoes', str(res.data))
 
-    def test_api_can_get_shopping_list_by_id(self):
+    def test_api_can_get_item_by_id(self):
         """
-        Test API can get a single shopping list by using it's id
+        Test API can get a single shopping list item by using it's id
         """
         self.register_user()
         result = self.login_user()
@@ -92,62 +76,77 @@ class ShoppingListTestCase(unittest.TestCase):
                                 data=self.shopping_list)
         # assert that the shopping list is created
         self.assertEqual(rv.status_code, 201)
-        # get the response data in json format
-        results = json.loads(rv.data.decode())
 
-        result = self.client().get(
-            '/shopping_list/{}'.format(results['id']),
-            headers={'x-access-token': access_token})
-        # assert that the shopping list is actually returned given its ID
+        # create shopping list item
+        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        # assert that the shopping list item is created
+        self.assertEqual(res.status_code, 200)
+        # get the response data in json format
+        results = json.loads(res.data.decode())
+
+        result = self.client().get('/shopping_list/1/items/{}'.format(results['id']),
+                                   headers={'x-access-token': access_token})
+        # assert that the shopping list item is actually returned given its ID
         self.assertEqual(result.status_code, 200)
-        self.assertIn('Groceries', str(result.data))
+        self.assertIn('Tomatoes', str(result.data))
 
     def test_shopping_list_can_be_edited(self):
         """
-        Test API can edit an existing shopping list. (PUT request)
+        Test API can edit an existing shopping list item. (PUT request)
         """
         self.register_user()
         result = self.login_user()
         access_token = json.loads(result.data.decode())['access-token']
 
         rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
-                                data={'name': 'Movies'})
+                                data=self.shopping_list)
         self.assertEqual(rv.status_code, 201)
-        # get the json with the shopping list
-        results = json.loads(rv.data.decode())
+        # create shopping list item
+        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        # assert that the shopping list item is created
+        self.assertEqual(res.status_code, 200)
+        # get the json with the shopping list item
+        results = json.loads(res.data.decode())
 
-        # then, we edit the created shopping list by making a PUT request
+        # then, we edit the created shopping list item by making a PUT request
         rv = self.client().put(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_list/1/items/{}'.format(results['id']),
             headers={'x-access-token': access_token},
             data={
-                "name": "Electronics"
+                "name": "Oranges"
             })
         self.assertEqual(rv.status_code, 200)
 
-        # finally, we get the edited shopping list to see if it is actually edited.
+        # finally, we get the edited shopping list item to see if it is actually edited.
         results = self.client().get(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_list/1/items/{}'.format(results['id']),
             headers={'x-access-token': access_token})
-        self.assertIn('Electronics', str(results.data))
+        self.assertIn('Oranges', str(results.data))
 
     def test_shopping_list_deletion(self):
         """
-        Test API can delete an existing shopping list. (DELETE request)
+        Test API can delete an existing shopping list item. (DELETE request)
         """
         self.register_user()
         result = self.login_user()
         access_token = json.loads(result.data.decode())['access-token']
 
         rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
-                                data={'name': 'Consoles'})
+                                data=self.shopping_list)
         self.assertEqual(rv.status_code, 201)
+        # create shopping list item
+        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        # assert that the shopping list item is created
+        self.assertEqual(res.status_code, 200)
         # get the shopping list in json
-        results = json.loads(rv.data.decode())
+        results = json.loads(res.data.decode())
 
         # delete the shopping list we just created
         res = self.client().delete(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_list/1/items/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
