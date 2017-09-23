@@ -220,7 +220,7 @@ def create_app(config_name):
         else:
             return {
                        "message": "You do not have permissions to view that shopping list"
-                   }, 401
+                   }, 403
 
     @app.route('/shopping_list/<list_id>', methods=['PUT'])
     @token_required
@@ -269,7 +269,7 @@ def create_app(config_name):
                 else:
                     return {
                                "message": "You do not have permissions to edit that shopping list"
-                           }, 401
+                           }, 403
             else:
                 return {
                            "message": "Shopping list already exists"
@@ -294,7 +294,7 @@ def create_app(config_name):
             else:
                 return {
                            "message": "You do not have permissions to delete that shopping list"
-                       }, 401
+                       }, 403
 
     @app.route('/shopping_list/<list_id>/items', methods=['POST', 'GET'])
     @token_required
@@ -372,7 +372,7 @@ def create_app(config_name):
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
         # Check if item belongs to its owner's list
-        if shopping_list.user_id == user_id and shopping_list_item.list_id == list_id:
+        if shopping_list.user_id == user_id:
             response = jsonify({
                 'id': shopping_list_item.id,
                 'name': shopping_list_item.name,
@@ -381,12 +381,12 @@ def create_app(config_name):
                 'date_created': shopping_list_item.date_created,
                 'date_modified': shopping_list_item.date_modified
             })
-            response.status_code = 200
+            response.status_code = 201
             return response
         else:
             return {
                        "message": "You do not have permissions to view that item"
-                   }, 401
+                   }, 403
 
     @app.route('/shopping_list/<list_id>/items/<item_id>', methods=['PUT'])
     @token_required
@@ -413,9 +413,8 @@ def create_app(config_name):
             # There is no item so we'll try to create it
             if not s_list_item:
                 # Check if item belongs to its owner's list
-                if shopping_list.user_id == user_id and shopping_list_item.list_id == list_id:
+                if shopping_list.user_id == user_id:
                     try:
-
                         shopping_list_item.name = name
                         shopping_list_item.quantity = quantity
                         shopping_list_item.unit_price = unit_price
@@ -429,7 +428,7 @@ def create_app(config_name):
                             'date_created': shopping_list_item.date_created,
                             'date_modified': shopping_list_item.date_modified
                         })
-                        response.status_code = 200
+                        response.status_code = 201
                         return response
 
                     except Exception as e:
@@ -441,7 +440,7 @@ def create_app(config_name):
                 else:
                     return {
                                "message": "You do not have permissions to edit that item"
-                           }, 401
+                           }, 403
             else:
                 return {
                            "message": "Item already exists"
@@ -459,14 +458,14 @@ def create_app(config_name):
             abort(404)
 
         if request.method == 'DELETE':
-            if shopping_list.user_id == user_id and shopping_list_item.list_id == list_id:
+            if shopping_list.user_id == user_id:
                 shopping_list.delete()
                 return {
                            "message": "Item {} deleted successfully".format(shopping_list.id)
-                       }, 200
+                       }, 201
             else:
                 return {
                            "message": "You do not have permissions to delete that item"
-                       }, 401
+                       }, 403
 
     return app
