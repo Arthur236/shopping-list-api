@@ -14,77 +14,77 @@ A simple api to a shopping list application
 
 ### Installation and setup
 Clone this repository
->https://github.com/Arthur236/shopping-list-api
+&gt;https://github.com/Arthur236/shopping-list-api
 
 ### Navigate to the project directory
 
->cd _path to project directory_
+&gt;cd _path to project directory_
 
 ### Install Python
 
->https://www.python.org/downloads/release/python-362/
+&gt;https://www.python.org/downloads/release/python-362/
 
 ### Install virtualenv
 
->pip install virtualenv
+&gt;pip install virtualenv
 
 ### Install virtualenvwrapper-win
 
->pip install virtualenvwrapper-win
+&gt;pip install virtualenvwrapper-win
 
 ### Make a virtual environment
 
->mkvirtualenv _project-name_
+&gt;mkvirtualenv _project-name_
 
 ### Connect your project to the virtual environment
 
->setprojectdir .
+&gt;setprojectdir .
 
 This will ensure the next time you activate your environment, you will be automatically moved to the directory
 
 ### Activate your environment
 
->workon _project-name_
+&gt;workon _project-name_
 
 ### Requirements
 
 All the requirements for the project are located in the requirements.txt file in the project root.  
 You can automatically install all of them by typing:  
 
->pip install -r requirements.txt
+&gt;pip install -r requirements.txt
 
 ### Initialize, migrate and update the database:
->python manage.py db init  
+&gt;python manage.py db init  
  python manage.py db migrate  
  python manage.py db upgrade
  
  ### Testing the application
- >python manage.py test
+ &gt;python manage.py test
  
  ### Running the application
  First you must export or set the environment variables like so:
- >set FLASK_APP=run.py  
+ &gt;set FLASK_APP=run.py  
 set SECRET=some_random_long_text  
 set APP_SETTINGS=development  
 set DATABASE_URL=postgresql://_postgres-user_:_password_@localhost/_db-name_
 
 Then run the application using:
->flask run
+&gt;flask run
 
 ### Application end points
 Access the endpoints using your preferred client e.g. Postman
 
-| Resource URL                                       | Method  | Description              | Requires Token |
-|----------------------------------------------------|---------|--------------------------|----------------|  
-| /auth/register                                     | POST    | User registration        | FALSE          |
-| /auth/login                                        | POST    | User login               | FALSE          |
-| /shopping_lists                                    | POST    | Create shopping list     | TRUE           |
-| /shopping_lists                                    | GET     | Get shopping lists       | TRUE           |
-| /shopping_list/<int:list_id>                       | GET     | Get a shopping list      | TRUE           |
-| /shopping_list/<int:list_id>                       | PUT     | Edit a shopping list     | TRUE           |
-| /shopping_list/<int:list_id>                       | DELETE  | Delete a shopping list   | TRUE           |
-| /shopping_list/<int:list_id>/items                 | POST    | Create a list item       | TRUE           |
-| /shopping_list/<int:list_id>/items                 | GET     | Get list items           | TRUE           |
-| /shopping_list/<int:list_id>/items/<int:item_id>   | GET     | Get a list item          | TRUE           |
-| /shopping_list/<int:list_id>/items/<int:item_id>   | PUT     | Edit a list item         | TRUE           |
-| /shopping_list/<int:list_id>/items/<int:item_id>   | DELETE  | Delete a list item       | TRUE           |
+| Resource URL                                                   | Method  | Description              | Requires Token |
+|----------------------------------------------------------------|---------|--------------------------|----------------|
+| /auth/register                                                 | POST    | User registration        | FALSE          |
+| /auth/login                                                    | POST    | User login               | FALSE          |
+| /shopping_lists                                                | POST    | Create shopping list     | TRUE           |
+| /shopping_lists                                                | GET     | Get shopping lists       | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;                             | GET     | Get a shopping list      | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;                             | PUT     | Edit a shopping list     | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;                             | DELETE  | Delete a shopping list   | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;/items                       | POST    | Create a list item       | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;/items                       | GET     | Get list items           | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | GET     | Get a list item          | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | PUT     | Edit a list item         | TRUE           |
+| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | DELETE  | Delete a list item       | TRUE           |
