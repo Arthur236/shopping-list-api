@@ -14,62 +14,62 @@ A simple api to a shopping list application
 
 ### Installation and setup
 Clone this repository
-&gt;https://github.com/Arthur236/shopping-list-api
+>https://github.com/Arthur236/shopping-list-api
 
 ### Navigate to the project directory
 
-&gt;cd _path to project directory_
+>cd _path to project directory_
 
 ### Install Python
 
-&gt;https://www.python.org/downloads/release/python-362/
+>https://www.python.org/downloads/release/python-362/
 
 ### Install virtualenv
 
-&gt;pip install virtualenv
+>pip install virtualenv
 
 ### Install virtualenvwrapper-win
 
-&gt;pip install virtualenvwrapper-win
+>pip install virtualenvwrapper-win
 
 ### Make a virtual environment
 
-&gt;mkvirtualenv _project-name_
+>mkvirtualenv _project-name_
 
 ### Connect your project to the virtual environment
 
-&gt;setprojectdir .
+>setprojectdir .
 
 This will ensure the next time you activate your environment, you will be automatically moved to the directory
 
 ### Activate your environment
 
-&gt;workon _project-name_
+>workon _project-name_
 
 ### Requirements
 
 All the requirements for the project are located in the requirements.txt file in the project root.  
 You can automatically install all of them by typing:  
 
-&gt;pip install -r requirements.txt
+>pip install -r requirements.txt
 
 ### Initialize, migrate and update the database:
-&gt;python manage.py db init  
+>python manage.py db init  
  python manage.py db migrate  
  python manage.py db upgrade
  
  ### Testing the application
- &gt;python manage.py test
+ >python manage.py test
  
  ### Running the application
  First you must export or set the environment variables like so:
- &gt;set FLASK_APP=run.py  
+ >set FLASK_APP=run.py  
 set SECRET=some_random_long_text  
 set APP_SETTINGS=development  
 set DATABASE_URL=postgresql://_postgres-user_:_password_@localhost/_db-name_
 
 Then run the application using:
-&gt;flask run
+>flask run
 
 ### Application end points
 Access the endpoints using your preferred client e.g. Postman
