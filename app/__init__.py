@@ -289,4 +289,72 @@ def create_app(config_name):
                            "message": "You do not have permissions to delete that shopping list"
                        }, 401
 
+    @app.route('/shopping_list/<list_id>/items', methods=['POST', 'GET'])
+    @token_required
+    def shopping_list_item(user_id, list_id):
+        if request.method == "POST":
+            name = str(request.data.get('name', ''))
+            quantity = str(request.data.get('quantity', ''))
+            unit_price = str(request.data.get('unit_price', ''))
+
+            if name:
+                if not re.match("^[a-zA-Z0-9 _]*$", name):
+                    response = {
+                        'message': 'The list name cannot contain special characters. Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                s_list_item = \
+                    models.ShoppingListItem.query.filter(func.lower(ShoppingListItem.name) == name.lower(),
+                                                         ShoppingListItem.list_id == list_id).first()
+
+                if not s_list_item:
+                    # There is no list item so we'll try to create it
+                    try:
+
+                        shopping_list_item = ShoppingListItem(list_id=list_id, name=name, quantity=quantity,
+                                                              unit_price=unit_price)
+                        shopping_list_item.save()
+
+                        response = jsonify({
+                            'id': shopping_list_item.id,
+                            'name': shopping_list_item.name,
+                            'quantity': shopping_list_item.quantity,
+                            'unit_price': shopping_list_item.unit_price,
+                            'date_created': shopping_list_item.date_created,
+                            'date_modified': shopping_list_item.date_modified
+                        })
+                        response.status_code = 201
+                        return response
+
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {
+                            'message': str(e)
+                        }
+                        return make_response(jsonify(response)), 401
+                else:
+                    response = {
+                        'message': 'That shopping list item already exists.'
+                    }
+                    return make_response(jsonify(response)), 401
+        else:
+            # GET
+            shopping_list_item = ShoppingListItem.get_all(list_id=list_id)
+            results = []
+
+            for shopping_list_item in shopping_list_item:
+                obj = {
+                    'id': shopping_list_item.id,
+                    'name': shopping_list_item.name,
+                    'quantity': shopping_list_item.quantity,
+                    'unit_price': shopping_list_item.unit_price,
+                    'date_created': shopping_list_item.date_created,
+                    'date_modified': shopping_list_item.date_modified
+                }
+                results.append(obj)
+            response = jsonify(results)
+            response.status_code = 200
+            return response
+
     return app

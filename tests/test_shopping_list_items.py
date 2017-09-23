@@ -61,7 +61,7 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
         self.assertIn('Tomatoes', str(res.data))
 
     def test_api_can_get_item_by_id(self):
@@ -81,14 +81,14 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
         # get the response data in json format
         results = json.loads(res.data.decode())
 
         result = self.client().get('/shopping_list/1/items/{}'.format(results['id']),
                                    headers={'x-access-token': access_token})
         # assert that the shopping list item is actually returned given its ID
-        self.assertEqual(result.status_code, 200)
+        self.assertEqual(result.status_code, 201)
         self.assertIn('Tomatoes', str(result.data))
 
     def test_shopping_list_can_be_edited(self):
@@ -106,7 +106,7 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
         # get the json with the shopping list item
         results = json.loads(res.data.decode())
 
@@ -117,7 +117,7 @@ class ShoppingListTestCase(unittest.TestCase):
             data={
                 "name": "Oranges"
             })
-        self.assertEqual(rv.status_code, 200)
+        self.assertEqual(rv.status_code, 201)
 
         # finally, we get the edited shopping list item to see if it is actually edited.
         results = self.client().get(
@@ -140,7 +140,7 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().post('/shopping_list/1/items', headers={'x-access-token': access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
         # get the shopping list in json
         results = json.loads(res.data.decode())
 
@@ -148,7 +148,7 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().delete(
             '/shopping_list/1/items/{}'.format(results['id']),
             headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.status_code, 201)
 
     def tearDown(self):
         """
