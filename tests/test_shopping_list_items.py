@@ -74,7 +74,6 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
         # get the response data in json format
         results = json.loads(res.data.decode())
-        print(results)
 
         result = self.client().get('/shopping_list/1/items/{}'.format(results['id']),
                                    headers={'x-access-token': self.access_token})
@@ -99,7 +98,9 @@ class ShoppingListTestCase(unittest.TestCase):
             '/shopping_list/1/items/{}'.format(results['id']),
             headers={'x-access-token': self.access_token},
             data={
-                "name": "Oranges"
+                "name": "Oranges",
+                "quantity": 2,
+                "unit_price": 20
             })
         self.assertEqual(rv.status_code, 201)
 
