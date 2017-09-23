@@ -174,7 +174,7 @@ class ShoppingListItem(db.Model):
         """
         return ShoppingListItem.query.filter_by(list_id=list_id)
 
-    def delete(self, list_id):
+    def delete(self):
         """
         Deletes a given shopping list item
         """
