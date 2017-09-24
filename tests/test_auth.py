@@ -90,4 +90,32 @@ class AuthTestCase(unittest.TestCase):
         # and an error status code 401(Unauthorized)
         self.assertEqual(res.status_code, 401)
         self.assertEqual(
-            result['message'], "Invalid username or password, Please try again")
+            result['message'], "Invalid email or password. Please try again")
+
+    def test_password_reset(self):
+        """
+        Test that a registered user can reset their password
+        """
+        # Register a user
+        self.client().post('/auth/register', data=self.user_data)
+        # Get password reset token
+        res = self.client().post('/auth/reset', data={'email': 'user1@gmail.com'})
+        self.assertEqual(res.status_code, 200)
+        token = json.loads(res.data.decode())
+
+        # Attempt to reset their password
+        reset_res = self.client().put('/auth/password/' + token['pass-reset-token'],
+                                      data={'password': 'pass123'})
+        self.assertEqual(reset_res.status_code, 201)
+
+        # Ensure you can log in with changed password
+        login_res = self.client().post('/auth/login',
+                                       data={'email': 'user1@gmail.com', 'password': 'pass123'})
+
+        # get the results in json format
+        result = json.loads(login_res.data.decode())
+        # Test that the response contains success message
+        self.assertEqual(result['message'], "You logged in successfully.")
+        # Assert that the status code is equal to 200
+        self.assertEqual(login_res.status_code, 200)
+        self.assertTrue(result['access-token'])
