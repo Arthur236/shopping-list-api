@@ -301,6 +301,31 @@ def create_app(config_name):
         response.status_code = 200
         return response
 
+    @app.route('/admin/users/<id>', methods=['DELETE'])
+    @token_required
+    def delete_user(user_id, id):
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user.admin:
+            response = {'message': 'Cannot perform that operation without admin rights'}
+            return make_response(jsonify(response)), 403
+
+        user = User.query.filter_by(id=id).first()
+
+        if not user:
+            response = {'message': 'User does not exist'}
+            return make_response(jsonify(response)), 404
+
+        if user.id == user_id:
+            response = {'message': 'You cannot delete yourself'}
+            return make_response(jsonify(response)), 403
+
+        db.session.delete(user)
+        db.session.commit()
+
+        response = {'message': 'User deleted successfully'}
+        return make_response(jsonify(response)), 200
+
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required
     def shopping_list(user_id):
