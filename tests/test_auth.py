@@ -21,6 +21,7 @@ class AuthTestCase(unittest.TestCase):
         # This is the user test json data with a predefined username and password
         self.user_data = {
             'username': 'User1',
+            'email': 'user1@gmail.com',
             'password': 'password'
         }
 
@@ -77,6 +78,7 @@ class AuthTestCase(unittest.TestCase):
         # define a dictionary to represent an unregistered user
         not_a_user = {
             'username': 'not_user',
+            'email': 'not_user@gmail.com',
             'password': 'nope'
         }
         # send a POST request to /auth/login with the data above

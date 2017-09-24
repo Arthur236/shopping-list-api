@@ -57,15 +57,9 @@ def create_app(config_name):
         """
         Function to validate email
         """
-        pattern = re.compile(email)
-
-        # here is an example list of email to check it at the end
-        emails = ["john@example.com", "python-list@python.org", "wha.t.`1an?ug{}ly@email.com"]
-        for email in emails:
-            if not re.match(pattern, email):
-                return "The email is not valid"
-            else:
-                return "Pass"
+        if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
+            return True
+        return False
 
     @app.route('/auth/register', methods=['POST'])
     def register():
@@ -76,7 +70,7 @@ def create_app(config_name):
 
             if email:
                 email_resp = validate_email(email)
-                if email_resp != "Pass":
+                if not email_resp:
                     response = {
                         'message': 'The email is not valid'
                     }
