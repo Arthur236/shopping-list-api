@@ -26,16 +26,17 @@ class ShoppingListTestCase(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
-    def register_user(self, username="test", password="password"):
+    def register_user(self, username="test", email="test@gmail.com", password="password"):
         user_data = {
             'username': username,
+            'email': email,
             'password': password
         }
         return self.client().post('/auth/register', data=user_data)
 
-    def login_user(self, username="test", password="password"):
+    def login_user(self, email="test@gmail.com", password="password"):
         user_data = {
-            'username': username,
+            'email': email,
             'password': password
         }
         return self.client().post('/auth/login', data=user_data)
