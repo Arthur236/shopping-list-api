@@ -53,13 +53,35 @@ def create_app(config_name):
 
         return decorated
 
+    def validate_email(email):
+        """
+        Function to validate email
+        """
+        pattern = re.compile(email)
+
+        # here is an example list of email to check it at the end
+        emails = ["john@example.com", "python-list@python.org", "wha.t.`1an?ug{}ly@email.com"]
+        for email in emails:
+            if not re.match(pattern, email):
+                return "The email is not valid"
+            else:
+                return "Pass"
+
     @app.route('/auth/register', methods=['POST'])
     def register():
         if request.method == "POST":
             username = str(request.data.get('username', ''))
+            email = str(request.data.get('email', ''))
             password = str(request.data.get('password', ''))
 
-            if username:
+            if email:
+                email_resp = validate_email(email)
+                if email_resp != "Pass":
+                    response = {
+                        'message': 'The email is not valid'
+                    }
+                    return make_response(jsonify(response)), 400
+
                 if not re.match("^[a-zA-Z0-9_]*$", username):
                     response = {
                         'message': 'The username cannot contain special characters. Only underscores'
@@ -79,8 +101,9 @@ def create_app(config_name):
                         post_data = request.data
                         # Register the user
                         username = post_data['username']
+                        email = post_data['email']
                         password = post_data['password']
-                        user = User(username=username, password=password)
+                        user = User(username=username, email=email, password=password)
                         user.save()
 
                         response = {
@@ -107,10 +130,10 @@ def create_app(config_name):
     def login():
         if request.method == "POST":
             try:
-                username = str(request.data.get('username', ''))
+                email = str(request.data.get('email', ''))
 
-                if username:
-                    user = User.query.filter_by(username=username).first()
+                if email:
+                    user = User.query.filter_by(email=email).first()
                     # Try to authenticate the found user using their password
                     if user and user.password_is_valid(request.data['password']):
                         # Generate the access token. This will be used as the authorization header
@@ -137,6 +160,10 @@ def create_app(config_name):
                 }
                 # Return a server error using the HTTP Error Code 500 (Internal Server Error)
                 return make_response(jsonify(response)), 500
+
+    @app.route('/auth/reset', methods=['POST'])
+    def reset():
+        return True
 
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required

@@ -17,6 +17,7 @@ class User(db.Model):
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(256), nullable=False, unique=True)
     password = db.Column(db.String(256), nullable=False)
+    admin = db.Column(db.Boolean, nullable=False, default=False)
     shopping_lists = db.relationship(
         'ShoppingList', order_by='ShoppingList.id', cascade="all, delete-orphan")
 
@@ -158,6 +159,7 @@ class PasswordReset(db.Model):
     __tablename__ = 'password_resets'
 
     # Define the columns of the users table, starting with the primary key
+    id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(256), nullable=False, unique=True)
     token = db.Column(db.String(256), nullable=False)
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
