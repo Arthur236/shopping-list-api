@@ -78,6 +78,8 @@ Access the endpoints using your preferred client e.g. Postman
 |----------------------------------------------------------------|---------|--------------------------|----------------|
 | /auth/register                                                 | POST    | User registration        | FALSE          |
 | /auth/login                                                    | POST    | User login               | FALSE          |
+| /auth/reset                                                    | POST    | Generate reset token     | FALSE          |
+| /auth/password/&lt;string:token&gt;                            | PUT     | Reset password           | TRUE           |
 | /shopping_lists                                                | POST    | Create shopping list     | TRUE           |
 | /shopping_lists                                                | GET     | Get shopping lists       | TRUE           |
 | /shopping_list/&lt;int:list_id&gt;                             | GET     | Get a shopping list      | TRUE           |
