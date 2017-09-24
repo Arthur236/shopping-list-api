@@ -245,6 +245,33 @@ def create_app(config_name):
                         }
                         return make_response(jsonify(response)), 401
 
+    @app.route('/admin/users', methods=['GET'])
+    @token_required
+    def get_all_users(user_id):
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user.admin:
+            response = {
+                'message': 'Cannot perform that operation without admin rights'
+            }
+            return make_response(jsonify(response)), 403
+
+        users = User.query.all()
+
+        results = []
+
+        for user in users:
+            obj = {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'admin': user.admin
+            }
+            results.append(obj)
+        response = jsonify(results)
+        response.status_code = 200
+        return response
+
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required
     def shopping_list(user_id):
