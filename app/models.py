@@ -148,3 +148,36 @@ class ShoppingListItem(db.Model):
         Return a representation of a shopping list item instance
         """
         return "<ShoppingListItem: {}>".format(self.name)
+
+
+class PasswordReset(db.Model):
+    """
+    This class defines the password resets table
+    """
+
+    __tablename__ = 'password_resets'
+
+    # Define the columns of the users table, starting with the primary key
+    email = db.Column(db.String(256), nullable=False, unique=True)
+    token = db.Column(db.String(256), nullable=False)
+    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    def __init__(self, email, token):
+        """
+        Initialize the table
+        """
+        self.email = email
+        self.token = token
+
+    def save(self):
+        """
+        Save password reset details
+        """
+        db.session.add(self)
+        db.session.commit()
+
+    def __repr__(self):
+        """
+        Return a representation of a reset instance
+        """
+        return "<PasswordReset: {}>".format(self.token)
