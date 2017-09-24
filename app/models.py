@@ -3,6 +3,9 @@ Database models
 """
 from app import db
 from flask_bcrypt import Bcrypt
+from flask import current_app
+import jwt
+from datetime import datetime, timedelta
 
 
 class User(db.Model):
@@ -132,7 +135,7 @@ class ShoppingListItem(db.Model):
         """
         This method gets all the shopping list items for a given list
         """
-        return ShoppingListtem.query.filter_by(list_id=list_id)
+        return ShoppingListItem.query.filter_by(list_id=list_id)
 
     def delete(self):
         """
@@ -146,4 +149,3 @@ class ShoppingListItem(db.Model):
         Return a representation of a shopping list item instance
         """
         return "<ShoppingListItem: {}>".format(self.name)
-
