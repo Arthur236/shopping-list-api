@@ -4,6 +4,7 @@ Tests for authentication blueprint
 import unittest
 import json
 from app import create_app, db
+from app.models import User
 
 
 class AuthTestCase(unittest.TestCase):
@@ -22,7 +23,8 @@ class AuthTestCase(unittest.TestCase):
         self.user_data = {
             'username': 'User1',
             'email': 'user1@gmail.com',
-            'password': 'password'
+            'password': 'password',
+            'admin': False
         }
 
         with self.app.app_context():
@@ -119,3 +121,95 @@ class AuthTestCase(unittest.TestCase):
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
         self.assertTrue(result['access-token'])
+
+    def test_get_users(self):
+        """
+        Test that an admin can get all users
+        """
+        # Create a user as admin
+        res = self.client().post('/auth/register', data={
+            'username': 'admin',
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(res.status_code, 201)
+        user = User.query.filter_by(email='admin@gmail.com').first()
+        user.admin = True
+        user.save()
+
+        # create user by making a POST request
+        res = self.client().post('/auth/register', data=self.user_data)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/auth/login', data={
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # get all the users by making a GET request
+        res = self.client().get('/admin/users', headers={'x-access-token': access_token},)
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('user1', str(res.data))
+
+    def test_get_user_by_id(self):
+        """
+        Test that an admin can get a user by their id
+        """
+        # Create a user as admin
+        res = self.client().post('/auth/register', data={
+            'username': 'admin',
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(res.status_code, 201)
+        user = User.query.filter_by(email='admin@gmail.com').first()
+        user.admin = True
+        user.save()
+
+        # create user by making a POST request
+        res = self.client().post('/auth/register', data=self.user_data)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/auth/login', data={
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # get all the users by making a GET request
+        res = self.client().get('/admin/users/2', headers={'x-access-token': access_token}, )
+        self.assertEqual(res.status_code, 200)
+        self.assertIn('user1', str(res.data))
+
+    def test_delete_user(self):
+        """
+        Test that an admin can delete a user by their id
+        """
+        # Create a user as admin
+        res = self.client().post('/auth/register', data={
+            'username': 'admin',
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(res.status_code, 201)
+        user = User.query.filter_by(email='admin@gmail.com').first()
+        user.admin = True
+        user.save()
+
+        # create user by making a POST request
+        res = self.client().post('/auth/register', data=self.user_data)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/auth/login', data={
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        })
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # get all the users by making a GET request
+        res = self.client().delete('/admin/users/2', headers={'x-access-token': access_token}, )
+        self.assertEqual(res.status_code, 200)
