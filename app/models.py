@@ -18,6 +18,9 @@ class User(db.Model):
     email = db.Column(db.String(256), nullable=False, unique=True)
     password = db.Column(db.String(256), nullable=False)
     admin = db.Column(db.Boolean, nullable=False, default=False)
+    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+    date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                              onupdate=db.func.current_timestamp())
     shopping_lists = db.relationship(
         'ShoppingList', order_by='ShoppingList.id', cascade="all, delete-orphan")
 

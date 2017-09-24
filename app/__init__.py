@@ -265,10 +265,39 @@ def create_app(config_name):
                 'id': user.id,
                 'username': user.username,
                 'email': user.email,
-                'admin': user.admin
+                'admin': user.admin,
+                'date_created': user.date_created,
+                'date_modified': user.date_modified
             }
             results.append(obj)
         response = jsonify(results)
+        response.status_code = 200
+        return response
+
+    @app.route('/admin/users/<id>', methods=['GET'])
+    @token_required
+    def get_user(user_id, id):
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user.admin:
+            response = {'message': 'Cannot perform that operation without admin rights'}
+            return make_response(jsonify(response)), 403
+
+        user = User.query.filter_by(id=id).first()
+
+        if not user:
+            response = {'message': 'User does not exist'}
+            return make_response(jsonify(response)), 404
+
+        user = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'admin': user.admin,
+            'date_created': user.date_created,
+            'date_modified': user.date_modified
+        }
+        response = jsonify(user)
         response.status_code = 200
         return response
 
