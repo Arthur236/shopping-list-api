@@ -18,7 +18,7 @@ db = SQLAlchemy()
 
 
 def create_app(config_name):
-    from app.models import User, ShoppingList, ShoppingListItem
+    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
@@ -88,7 +88,7 @@ def create_app(config_name):
                     }
                     return make_response(jsonify(response)), 400
                 
-                user = models.User.query.filter(func.lower(User.username) == username.lower()).first()
+                user = models.User.query.filter(func.lower(User.email) == email.lower()).first()
                 if not user:
                     # There is no user so we'll try to register them
                     try:
@@ -143,7 +143,7 @@ def create_app(config_name):
                     else:
                         # User does not exist. Therefore, we return an error message
                         response = {
-                            'message': 'Invalid username or password, Please try again'
+                            'message': 'Invalid email or password. Please try again'
                         }
                         return make_response(jsonify(response)), 401
 
@@ -157,7 +157,48 @@ def create_app(config_name):
 
     @app.route('/auth/reset', methods=['POST'])
     def reset():
-        return True
+        if request.method == "POST":
+            try:
+                email = str(request.data.get('email', ''))
+
+                if email:
+                    user = User.query.filter_by(email=email).first()
+                    if user:
+                        # Generate the password reset token
+                        token = jwt.encode({'email': user.email,
+                                            'exp': datetime.utcnow() + timedelta(minutes=30)},
+                                           current_app.config.get('SECRET'))
+                        if token:
+                            reset_email = PasswordReset.query.filter_by(email=email).first()
+                            if reset_email:
+                                # email already has token so delete it
+                                reset_email.delete()
+
+                            post_data = request.data
+                            # Save reset details
+                            email = post_data['email']
+                            p_token = token.decode('UTF-8')
+                            pass_reset = PasswordReset(email=email, token=p_token)
+                            pass_reset.save()
+
+                            response = {
+                                'password-reset-token': token.decode('UTF-8')
+                            }
+                            return make_response(jsonify(response)), 200
+                    else:
+                        # User does not exist. Therefore, we return an error message
+                        response = {
+                            'message': 'Invalid email. Please try again'
+                        }
+                        return make_response(jsonify(response)), 401
+
+            except Exception as e:
+                # Create a response containing an string error message
+                response = {
+                    'message': str(e)
+                }
+                # Return a server error using the HTTP Error Code 500 (Internal Server Error)
+                return make_response(jsonify(response)), 500
 
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required

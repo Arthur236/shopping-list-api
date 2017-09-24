@@ -178,6 +178,13 @@ class PasswordReset(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def delete(self):
+        """
+        Deletes a given shopping list item
+        """
+        db.session.delete(self)
+        db.session.commit()
+
     def __repr__(self):
         """
         Return a representation of a reset instance
