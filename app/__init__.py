@@ -9,6 +9,7 @@ from sqlalchemy import func
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
+from flask_bcrypt import Bcrypt
 
 # local import
 from instance.config import app_config
@@ -182,7 +183,7 @@ def create_app(config_name):
                             pass_reset.save()
 
                             response = {
-                                'password-reset-token': token.decode('UTF-8')
+                                'pass-reset-token': token.decode('UTF-8')
                             }
                             return make_response(jsonify(response)), 200
                     else:
@@ -199,6 +200,50 @@ def create_app(config_name):
                 }
                 # Return a server error using the HTTP Error Code 500 (Internal Server Error)
                 return make_response(jsonify(response)), 500
+
+    @app.route('/auth/password/<token>', methods=['PUT'])
+    def password_reset(token):
+        # retrieve email related to token
+        reset_dets = PasswordReset.query.filter_by(token=token).first()
+
+        if not reset_dets:
+            response = {
+                'message': 'The token is not valid or missing'
+            }
+            return make_response(jsonify(response)), 400
+
+        if request.method == 'PUT':
+            email = reset_dets.email
+            password = str(request.data.get('password', ''))
+
+            if email and password:
+                if len(password) < 6:
+                    response = {
+                        'message': 'The password should be at least 6 characters long'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                user = models.User.query.filter(func.lower(User.email) == email.lower()).first()
+                if user:
+                    try:
+                        post_data = request.data
+
+                        password = post_data['password']
+                        password_hash = Bcrypt().generate_password_hash(password).decode()
+                        user.password = password_hash
+                        user.save()
+
+                        response = {
+                            'message': 'Password reset successfully. Please log in.'
+                        }
+                        # return a response notifying the user that they registered successfully
+                        return make_response(jsonify(response)), 201
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {
+                            'message': str(e)
+                        }
+                        return make_response(jsonify(response)), 401
 
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required
