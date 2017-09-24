@@ -3,9 +3,6 @@ Database models
 """
 from app import db
 from flask_bcrypt import Bcrypt
-from flask import current_app
-import jwt
-from datetime import datetime, timedelta
 
 
 class User(db.Model):
@@ -17,16 +14,18 @@ class User(db.Model):
 
     # Define the columns of the users table, starting with the primary key
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False, unique=True)
+    username = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(256), nullable=False, unique=True)
     password = db.Column(db.String(256), nullable=False)
     shopping_lists = db.relationship(
         'ShoppingList', order_by='ShoppingList.id', cascade="all, delete-orphan")
 
-    def __init__(self, username, password):
+    def __init__(self, username, email, password):
         """
         Initialize the user with a username and a password
         """
         self.username = username
+        self.email = email
         self.password = Bcrypt().generate_password_hash(password).decode()
 
     def password_is_valid(self, password):
