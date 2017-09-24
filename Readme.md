@@ -80,6 +80,9 @@ Access the endpoints using your preferred client e.g. Postman
 | /auth/login                                                    | POST    | User login               | FALSE          |
 | /auth/reset                                                    | POST    | Generate reset token     | FALSE          |
 | /auth/password/&lt;string:token&gt;                            | PUT     | Reset password           | TRUE           |
+| /admin/users                                                   | GET     | Get all users            | TRUE           |
+| /admin/users/&lt;int:id&gt;                                    | GET     | Get a specific user      | TRUE           |
+| /admin/users/&lt;int:id&gt;                                    | DELETE  | Delete a specific user   | TRUE           |
 | /shopping_lists                                                | POST    | Create shopping list     | TRUE           |
 | /shopping_lists                                                | GET     | Get shopping lists       | TRUE           |
 | /shopping_list/&lt;int:list_id&gt;                             | GET     | Get a shopping list      | TRUE           |
