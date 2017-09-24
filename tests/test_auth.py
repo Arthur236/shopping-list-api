@@ -23,8 +23,7 @@ class AuthTestCase(unittest.TestCase):
         self.user_data = {
             'username': 'User1',
             'email': 'user1@gmail.com',
-            'password': 'password',
-            'admin': False
+            'password': 'password'
         }
 
         with self.app.app_context():
@@ -126,17 +125,6 @@ class AuthTestCase(unittest.TestCase):
         """
         Test that an admin can get all users
         """
-        # Create a user as admin
-        res = self.client().post('/auth/register', data={
-            'username': 'admin',
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(res.status_code, 201)
-        user = User.query.filter_by(email='admin@gmail.com').first()
-        user.admin = True
-        user.save()
-
         # create user by making a POST request
         res = self.client().post('/auth/register', data=self.user_data)
         self.assertEqual(res.status_code, 201)
@@ -157,17 +145,6 @@ class AuthTestCase(unittest.TestCase):
         """
         Test that an admin can get a user by their id
         """
-        # Create a user as admin
-        res = self.client().post('/auth/register', data={
-            'username': 'admin',
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(res.status_code, 201)
-        user = User.query.filter_by(email='admin@gmail.com').first()
-        user.admin = True
-        user.save()
-
         # create user by making a POST request
         res = self.client().post('/auth/register', data=self.user_data)
         self.assertEqual(res.status_code, 201)
@@ -188,17 +165,6 @@ class AuthTestCase(unittest.TestCase):
         """
         Test that an admin can delete a user by their id
         """
-        # Create a user as admin
-        res = self.client().post('/auth/register', data={
-            'username': 'admin',
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(res.status_code, 201)
-        user = User.query.filter_by(email='admin@gmail.com').first()
-        user.admin = True
-        user.save()
-
         # create user by making a POST request
         res = self.client().post('/auth/register', data=self.user_data)
         self.assertEqual(res.status_code, 201)

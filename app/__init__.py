@@ -27,6 +27,14 @@ def create_app(config_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
 
+    @app.before_first_request
+    def insert_initial_user(*args, **kwargs):
+        db.session.add(User(username='admin', email='admin@gmail.com', password='admin123'))
+        db.session.commit()
+        user = User.query.filter_by(email='admin@gmail.com').first()
+        user.admin = True
+        user.save()
+
     def token_required(f):
         """
         Token decorator method
