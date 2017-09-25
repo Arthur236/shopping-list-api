@@ -143,7 +143,7 @@ def create_app(config_name):
                     if user and user.password_is_valid(request.data['password']):
                         # Generate the access token. This will be used as the authorization header
                         token = jwt.encode({'id': user.id,
-                                            'exp': datetime.utcnow() + timedelta(minutes=10)},
+                                            'exp': datetime.utcnow() + timedelta(minutes=30)},
                                            current_app.config.get('SECRET'))
                         if token:
                             response = {
@@ -177,7 +177,7 @@ def create_app(config_name):
                     if user:
                         # Generate the password reset token
                         token = jwt.encode({'email': user.email,
-                                            'exp': datetime.utcnow() + timedelta(minutes=30)},
+                                            'exp': datetime.utcnow() + timedelta(minutes=60)},
                                            current_app.config.get('SECRET'))
                         if token:
                             reset_email = PasswordReset.query.filter_by(email=email).first()
@@ -401,6 +401,26 @@ def create_app(config_name):
                     return make_response(jsonify(response)), 401
         else:
             # GET
+            search_query = request.args.get("q")
+            if search_query:
+                # if parameter q is specified
+                shopping_lists = ShoppingList.query.filter(ShoppingList.name.ilike('%' + search_query + '%'))\
+                    .filter_by(user_id=user_id).all()
+                output = []
+
+                for s_list in shopping_lists:
+                    obj = {
+                        'id': s_list.id,
+                        'name': s_list.name,
+                        'description': s_list.description,
+                        'date_created': s_list.date_created,
+                        'date_modified': s_list.date_modified
+                    }
+                    output.append(obj)
+                response = jsonify(output)
+                response.status_code = 200
+                return response
+
             shopping_list = ShoppingList.get_all(user_id=user_id)
             results = []
 
