@@ -58,7 +58,7 @@ class ShoppingListTestCase(unittest.TestCase):
         Test API can create a shopping list item (POST request)
         """
         # create shopping list item
-        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': self.access_token},
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': self.access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
         self.assertEqual(res.status_code, 201)
@@ -69,14 +69,14 @@ class ShoppingListTestCase(unittest.TestCase):
         Test API can get a single shopping list item by using it's id
         """
         # create shopping list item
-        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': self.access_token},
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': self.access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
         self.assertEqual(res.status_code, 201)
         # get the response data in json format
         results = json.loads(res.data.decode())
 
-        result = self.client().get('/shopping_list/1/items/{}'.format(results['id']),
+        result = self.client().get('/shopping_lists/1/items/{}'.format(results['id']),
                                    headers={'x-access-token': self.access_token})
         # assert that the shopping list item is actually returned given its ID
         self.assertEqual(result.status_code, 201)
@@ -87,7 +87,7 @@ class ShoppingListTestCase(unittest.TestCase):
         Test API can edit an existing shopping list item. (PUT request)
         """
         # create shopping list item
-        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': self.access_token},
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': self.access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
         self.assertEqual(res.status_code, 201)
@@ -96,7 +96,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # then, we edit the created shopping list item by making a PUT request
         rv = self.client().put(
-            '/shopping_list/1/items/{}'.format(results['id']),
+            '/shopping_lists/1/items/{}'.format(results['id']),
             headers={'x-access-token': self.access_token},
             data={
                 "name": "Oranges",
@@ -107,7 +107,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # finally, we get the edited shopping list item to see if it is actually edited.
         results = self.client().get(
-            '/shopping_list/1/items/{}'.format(results['id']),
+            '/shopping_lists/1/items/{}'.format(results['id']),
             headers={'x-access-token': self.access_token})
         self.assertIn('Oranges', str(results.data))
 
@@ -116,7 +116,7 @@ class ShoppingListTestCase(unittest.TestCase):
         Test API can delete an existing shopping list item. (DELETE request)
         """
         # create shopping list item
-        res = self.client().post('/shopping_list/1/items', headers={'x-access-token': self.access_token},
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': self.access_token},
                                  data=self.shopping_list_item)
         # assert that the shopping list item is created
         self.assertEqual(res.status_code, 201)
@@ -125,7 +125,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # delete the shopping list we just created
         res = self.client().delete(
-            '/shopping_list/1/items/{}'.format(results['id']),
+            '/shopping_lists/1/items/{}'.format(results['id']),
             headers={'x-access-token': self.access_token})
         self.assertEqual(res.status_code, 201)
 
