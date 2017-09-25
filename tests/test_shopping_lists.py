@@ -97,7 +97,7 @@ class ShoppingListTestCase(unittest.TestCase):
         results = json.loads(rv.data.decode())
 
         result = self.client().get(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         # assert that the shopping list is actually returned given its ID
         self.assertEqual(result.status_code, 200)
@@ -119,7 +119,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # then, we edit the created shopping list by making a PUT request
         rv = self.client().put(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token},
             data={
                 "name": "Electronics"
@@ -128,7 +128,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # finally, we get the edited shopping list to see if it is actually edited.
         results = self.client().get(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertIn('Electronics', str(results.data))
 
@@ -148,7 +148,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # delete the shopping list we just created
         res = self.client().delete(
-            '/shopping_list/{}'.format(results['id']),
+            '/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
