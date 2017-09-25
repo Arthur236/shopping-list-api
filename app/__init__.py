@@ -267,10 +267,17 @@ def create_app(config_name):
             return make_response(jsonify(response)), 403
 
         search_query = request.args.get("q")
+        limit = int(request.args.get('limit', 10))
+        page = int(request.args.get('page', 1))
+
         if search_query:
             # if parameter q is specified
             result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
             output = []
+
+            if not result:
+                response = {'message': 'No users were found'}
+                return make_response(jsonify(response)), 404
 
             for user in result:
                 obj = {
@@ -285,10 +292,14 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-        users = User.query.all()
-        results = []
+        users = []
+        paginated_users = User.query.order_by(User.username.asc()).paginate(page, limit)
 
-        for user in users:
+        if not paginated_users:
+            response = {'message': 'No users were found'}
+            return make_response(jsonify(response)), 404
+
+        for user in paginated_users.items:
             obj = {
                 'id': user.id,
                 'username': user.username,
@@ -297,8 +308,8 @@ def create_app(config_name):
                 'date_created': user.date_created,
                 'date_modified': user.date_modified
             }
-            results.append(obj)
-        response = jsonify(results)
+            users.append(obj)
+        response = jsonify(users)
         response.status_code = 200
         return response
 
