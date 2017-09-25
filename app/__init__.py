@@ -29,11 +29,13 @@ def create_app(config_name):
 
     @app.before_first_request
     def insert_initial_user(*args, **kwargs):
-        db.session.add(User(username='admin', email='admin@gmail.com', password='admin123'))
-        db.session.commit()
-        user = User.query.filter_by(email='admin@gmail.com').first()
-        user.admin = True
-        user.save()
+        user = User.query.all()
+        if not user:
+            db.session.add(User(username='admin', email='admin@gmail.com', password='admin123'))
+            db.session.commit()
+            user = User.query.filter_by(email='admin@gmail.com').first()
+            user.admin = True
+            user.save()
 
     def token_required(f):
         """
@@ -264,8 +266,26 @@ def create_app(config_name):
             }
             return make_response(jsonify(response)), 403
 
-        users = User.query.all()
+        search_query = request.args.get("q")
+        if search_query:
+            # if parameter q is specified
+            result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
+            output = []
 
+            for user in result:
+                obj = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'date_created': user.date_created,
+                    'date_modified': user.date_modified
+                }
+                output.append(obj)
+            response = jsonify(output)
+            response.status_code = 200
+            return response
+
+        users = User.query.all()
         results = []
 
         for user in users:
