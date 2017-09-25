@@ -439,8 +439,13 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
 
-            paginated_lists = ShoppingList.query.filter_by(user_id=user_id).order_by(ShoppingList.name.asc()).paginate(page, limit)
+            paginated_lists = ShoppingList.query.filter_by(user_id=user_id).\
+                order_by(ShoppingList.name.asc()).paginate(page, limit)
             results = []
+
+            if not paginated_lists:
+                response = {'message': 'User has no shopping lists'}
+                return make_response(jsonify(response)), 404
 
             for shopping_list in paginated_lists.items:
                 obj = {
@@ -455,7 +460,7 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/shopping_list/<list_id>', methods=['GET'])
+    @app.route('/shopping_lists/<list_id>', methods=['GET'])
     @token_required
     def get_shopping_list(user_id, list_id):
         # retrieve a shopping list using it's id
@@ -476,7 +481,7 @@ def create_app(config_name):
                        "message": "You do not have permissions to view that shopping list"
                    }, 403
 
-    @app.route('/shopping_list/<list_id>', methods=['PUT'])
+    @app.route('/shopping_lists/<list_id>', methods=['PUT'])
     @token_required
     def edit_shopping_list(user_id, list_id):
         # retrieve a shopping list using it's id
@@ -529,7 +534,7 @@ def create_app(config_name):
                            "message": "Shopping list already exists"
                        }, 401
 
-    @app.route('/shopping_list/<list_id>', methods=['DELETE'])
+    @app.route('/shopping_lists/<list_id>', methods=['DELETE'])
     @token_required
     def delete_shopping_list(user_id, list_id):
         # retrieve a shopping list using it's id
@@ -550,7 +555,7 @@ def create_app(config_name):
                            "message": "You do not have permissions to delete that shopping list"
                        }, 403
 
-    @app.route('/shopping_list/<list_id>/items', methods=['POST', 'GET'])
+    @app.route('/shopping_lists/<list_id>/items', methods=['POST', 'GET'])
     @token_required
     def shopping_list_item(user_id, list_id):
         if request.method == "POST":
@@ -602,12 +607,19 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+            
             if search_query:
                 # if parameter q is specified
                 shopping_list_items = ShoppingListItem.query.\
                     filter(ShoppingListItem.name.ilike('%' + search_query + '%')).\
                     filter_by(list_id=list_id).all()
                 output = []
+
+                if not shopping_list_items:
+                    response = {'message': 'The list has no items'}
+                    return make_response(jsonify(response)), 404
 
                 for list_item in shopping_list_items:
                     obj = {
@@ -623,10 +635,15 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
 
-            shopping_list_item = ShoppingListItem.get_all(list_id=list_id)
+            paginated_items = ShoppingListItem.query.filter_by(list_id=list_id).\
+                order_by(ShoppingListItem.name.asc()).paginate(page, limit)
             results = []
 
-            for shopping_list_item in shopping_list_item:
+            if not paginated_items:
+                response = {'message': 'The list has no items'}
+                return make_response(jsonify(response)), 404
+
+            for shopping_list_item in paginated_items.items:
                 obj = {
                     'id': shopping_list_item.id,
                     'name': shopping_list_item.name,
@@ -640,7 +657,7 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/shopping_list/<list_id>/items/<item_id>', methods=['GET'])
+    @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['GET'])
     @token_required
     def get_shopping_list_item(user_id, list_id, item_id):
         # retrieve a shopping list item using it's id
@@ -664,7 +681,7 @@ def create_app(config_name):
                        "message": "You do not have permissions to view that item"
                    }, 403
 
-    @app.route('/shopping_list/<list_id>/items/<item_id>', methods=['PUT'])
+    @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['PUT'])
     @token_required
     def edit_item(user_id, list_id, item_id):
         # retrieve a shopping list item using it's id
@@ -722,7 +739,7 @@ def create_app(config_name):
                            "message": "Item already exists"
                        }, 401
 
-    @app.route('/shopping_list/<list_id>/items/<item_id>', methods=['DELETE'])
+    @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['DELETE'])
     @token_required
     def delete_item(user_id, list_id, item_id):
         # retrieve a shopping list item using it's id

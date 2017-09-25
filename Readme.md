@@ -85,11 +85,11 @@ Access the endpoints using your preferred client e.g. Postman
 | /admin/users/&lt;int:id&gt;                                    | DELETE  | Delete a specific user   | TRUE           |
 | /shopping_lists                                                | POST    | Create shopping list     | TRUE           |
 | /shopping_lists                                                | GET     | Get shopping lists       | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;                             | GET     | Get a shopping list      | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;                             | PUT     | Edit a shopping list     | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;                             | DELETE  | Delete a shopping list   | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;/items                       | POST    | Create a list item       | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;/items                       | GET     | Get list items           | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | GET     | Get a list item          | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | PUT     | Edit a list item         | TRUE           |
-| /shopping_list/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | DELETE  | Delete a list item       | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;                             | GET     | Get a shopping list     | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;                             | PUT     | Edit a shopping list    | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;                             | DELETE  | Delete a shopping list  | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;/items                       | POST    | Create a list item      | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;/items                       | GET     | Get list items          | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | GET     | Get a list item         | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | PUT     | Edit a list item        | TRUE           |
+| /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;   | DELETE  | Delete a list item      | TRUE           |
