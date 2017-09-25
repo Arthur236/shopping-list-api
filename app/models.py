@@ -80,13 +80,6 @@ class ShoppingList(db.Model):
         db.session.add(self)
         db.session.commit()
 
-    @staticmethod
-    def get_all(user_id):
-        """
-        This method gets all the shopping lists for a given user
-        """
-        return ShoppingList.query.filter_by(user_id=user_id)
-
     def delete(self):
         """
         Deletes a given shopping list

@@ -413,11 +413,18 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+
             if search_query:
                 # if parameter q is specified
                 shopping_lists = ShoppingList.query.filter(ShoppingList.name.ilike('%' + search_query + '%'))\
                     .filter_by(user_id=user_id).all()
                 output = []
+
+                if not shopping_lists:
+                    response = {'message': 'User has no shopping lists'}
+                    return make_response(jsonify(response)), 404
 
                 for s_list in shopping_lists:
                     obj = {
@@ -432,10 +439,10 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
 
-            shopping_list = ShoppingList.get_all(user_id=user_id)
+            paginated_lists = ShoppingList.query.filter_by(user_id=user_id).order_by(ShoppingList.name.asc()).paginate(page, limit)
             results = []
 
-            for shopping_list in shopping_list:
+            for shopping_list in paginated_lists.items:
                 obj = {
                     'id': shopping_list.id,
                     'name': shopping_list.name,
