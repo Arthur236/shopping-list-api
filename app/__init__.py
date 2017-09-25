@@ -583,6 +583,28 @@ def create_app(config_name):
                     return make_response(jsonify(response)), 401
         else:
             # GET
+            search_query = request.args.get("q")
+            if search_query:
+                # if parameter q is specified
+                shopping_list_items = ShoppingListItem.query.\
+                    filter(ShoppingListItem.name.ilike('%' + search_query + '%')).\
+                    filter_by(list_id=list_id).all()
+                output = []
+
+                for list_item in shopping_list_items:
+                    obj = {
+                        'id': list_item.id,
+                        'name': list_item.name,
+                        'quantity': list_item.quantity,
+                        'unit_price': list_item.unit_price,
+                        'date_created': list_item.date_created,
+                        'date_modified': list_item.date_modified
+                    }
+                    output.append(obj)
+                response = jsonify(output)
+                response.status_code = 200
+                return response
+
             shopping_list_item = ShoppingListItem.get_all(list_id=list_id)
             results = []
 
