@@ -795,7 +795,6 @@ def create_app(config_name):
                 if not friend:
                     # The users are not friends
                     try:
-
                         friend = Friend(user1=user_id, user2=friend_id)
                         friend.save()
 
@@ -823,29 +822,30 @@ def create_app(config_name):
             page = int(request.args.get('page', 1))
 
             if search_query:
-                # if parameter q is specified
-                result = Friend.query.filter(Friend.user2.ilike('%' + search_query + '%')).\
-                    filter_by(user1=user_id).all()
-                output = []
+                result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
+                friend_list = []
 
-                if not result:
-                    response = {'message': 'You have no friends'}
+                for r_fr in result:
+                    output = Friend.query.filter_by(user1=user_id, user2=r_fr.id, accepted=True).all()
+
+                if not output:
+                    response = {'message': 'You have no friends with that username'}
                     return make_response(jsonify(response)), 404
 
-                for friend in result:
-                    user = User.query.filter_by(id=friend.user2)
+                for friend in output:
+                    user = User.query.filter_by(id=friend.user2).first()
                     obj = {
                         'username': user.username,
                         'email': user.email
                     }
-                    output.append(obj)
+                    friend_list.append(obj)
 
-                response = jsonify(output)
+                response = jsonify(friend_list)
                 response.status_code = 200
                 return response
 
             friends = []
-            friend_list = Friend.query.filter_by(user1=user_id).all()
+            friend_list = Friend.query.filter_by(user1=user_id, accepted=True).all()
 
             if not friend_list:
                 response = {'message': 'You have no friends'}
@@ -865,5 +865,10 @@ def create_app(config_name):
             response = jsonify(friends)
             response.status_code = 200
             return response
+
+    @app.route('/friends/<friend_id>', methods=['PUT'])
+    @token_required
+    def accept_friend_request():
+        return False
 
     return app
