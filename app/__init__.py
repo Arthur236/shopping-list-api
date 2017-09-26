@@ -508,7 +508,6 @@ def create_app(config_name):
                 # Check if user is owner
                 if shopping_list.user_id == user_id:
                     try:
-
                         shopping_list.name = name
                         shopping_list.description = description
                         shopping_list.save()
@@ -798,15 +797,8 @@ def create_app(config_name):
                         friend = Friend(user1=user_id, user2=friend_id)
                         friend.save()
 
-                        response = jsonify({
-                            'id': friend.id,
-                            'user1': friend.user1,
-                            'user2': friend.user2,
-                            'date_created': friend.date_created,
-                            'date_modified': friend.date_modified
-                        })
-                        response.status_code = 201
-                        return response
+                        response = {'message': 'Friend request sent'}
+                        return make_response(jsonify(response)), 200
 
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
@@ -866,9 +858,36 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/friends/<friend_id>', methods=['PUT'])
+    @app.route('/friends', methods=['PUT'])
     @token_required
-    def accept_friend_request():
-        return False
+    def accept_friend_request(user_id):
+        try:
+            friend_id = int(request.data.get('friend_id', ''))
+            friend = Friend.query.filter_by(user1=friend_id, user2=user_id).first()
+        except Exception as e:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': str(e)}
+            return make_response(jsonify(response)), 401
+
+        if request.method == 'PUT':
+            if not friend:
+                response = {'message': 'You have no friend request from that user'}
+                return make_response(jsonify(response)), 404
+
+            if friend.accepted:
+                response = {'message': 'You are already friends with that user'}
+                return make_response(jsonify(response)), 403
+
+            try:
+                friend.accepted = True
+                friend.save()
+
+                response = {'message': 'You are now friends'}
+                return make_response(jsonify(response)), 200
+
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': str(e)}
+                return make_response(jsonify(response)), 401
 
     return app
