@@ -5,7 +5,7 @@ from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
 from flask import request, jsonify, abort, make_response, current_app
 import re
-from sqlalchemy import func
+from sqlalchemy import func, or_, and_
 import jwt
 from functools import wraps
 from datetime import datetime, timedelta
@@ -82,21 +82,15 @@ def create_app(config_name):
             if email:
                 email_resp = validate_email(email)
                 if not email_resp:
-                    response = {
-                        'message': 'The email is not valid'
-                    }
+                    response = {'message': 'The email is not valid'}
                     return make_response(jsonify(response)), 400
 
                 if not re.match("^[a-zA-Z0-9_]*$", username):
-                    response = {
-                        'message': 'The username cannot contain special characters. Only underscores'
-                    }
+                    response = {'message': 'The username cannot contain special characters. Only underscores'}
                     return make_response(jsonify(response)), 400
 
                 if len(password) < 6:
-                    response = {
-                        'message': 'The password should be at least 6 characters long'
-                    }
+                    response = {'message': 'The password should be at least 6 characters long'}
                     return make_response(jsonify(response)), 400
                 
                 user = models.User.query.filter(func.lower(User.email) == email.lower()).first()
@@ -111,23 +105,17 @@ def create_app(config_name):
                         user = User(username=username, email=email, password=password)
                         user.save()
 
-                        response = {
-                            'message': 'You were registered successfully. Please log in.'
-                        }
+                        response = {'message': 'You were registered successfully. Please log in.'}
                         # return a response notifying the user that they registered successfully
                         return make_response(jsonify(response)), 201
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
                 else:
                     # There is an existing user. We don't want to register users twice
                     # Return a message to the user telling them that they they already exist
-                    response = {
-                        'message': 'User already exists. Please login.'
-                    }
+                    response = {'message': 'User already exists. Please login.'}
 
                     return make_response(jsonify(response)), 202
 
@@ -153,16 +141,12 @@ def create_app(config_name):
                             return make_response(jsonify(response)), 200
                     else:
                         # User does not exist. Therefore, we return an error message
-                        response = {
-                            'message': 'Invalid email or password. Please try again'
-                        }
+                        response = {'message': 'Invalid email or password. Please try again'}
                         return make_response(jsonify(response)), 401
 
             except Exception as e:
                 # Create a response containing an string error message
-                response = {
-                    'message': str(e)
-                }
+                response = {'message': str(e)}
                 # Return a server error using the HTTP Error Code 500 (Internal Server Error)
                 return make_response(jsonify(response)), 500
 
@@ -192,22 +176,16 @@ def create_app(config_name):
                             pass_reset = PasswordReset(email=email, token=p_token)
                             pass_reset.save()
 
-                            response = {
-                                'pass-reset-token': token.decode('UTF-8')
-                            }
+                            response = {'pass-reset-token': token.decode('UTF-8')}
                             return make_response(jsonify(response)), 200
                     else:
                         # User does not exist. Therefore, we return an error message
-                        response = {
-                            'message': 'Invalid email. Please try again'
-                        }
+                        response = {'message': 'Invalid email. Please try again'}
                         return make_response(jsonify(response)), 401
 
             except Exception as e:
                 # Create a response containing an string error message
-                response = {
-                    'message': str(e)
-                }
+                response = {'message': str(e)}
                 # Return a server error using the HTTP Error Code 500 (Internal Server Error)
                 return make_response(jsonify(response)), 500
 
@@ -217,9 +195,7 @@ def create_app(config_name):
         reset_dets = PasswordReset.query.filter_by(token=token).first()
 
         if not reset_dets:
-            response = {
-                'message': 'The token is not valid or missing'
-            }
+            response = {'message': 'The token is not valid or missing'}
             return make_response(jsonify(response)), 400
 
         if request.method == 'PUT':
@@ -228,9 +204,7 @@ def create_app(config_name):
 
             if email and password:
                 if len(password) < 6:
-                    response = {
-                        'message': 'The password should be at least 6 characters long'
-                    }
+                    response = {'message': 'The password should be at least 6 characters long'}
                     return make_response(jsonify(response)), 400
 
                 user = models.User.query.filter(func.lower(User.email) == email.lower()).first()
@@ -250,9 +224,7 @@ def create_app(config_name):
                         return make_response(jsonify(response)), 201
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
 
     @app.route('/users', methods=['GET'])
@@ -378,9 +350,7 @@ def create_app(config_name):
 
             if name:
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
-                    response = {
-                        'message': 'The list name cannot contain special characters. Only underscores'
-                    }
+                    response = {'message': 'The list name cannot contain special characters. Only underscores'}
                     return make_response(jsonify(response)), 400
 
                 s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower(),
@@ -389,7 +359,6 @@ def create_app(config_name):
                 if not s_list:
                     # There is no list so we'll try to create it
                     try:
-
                         shopping_list = ShoppingList(user_id=user_id, name=name, description=description)
                         shopping_list.save()
 
@@ -405,14 +374,10 @@ def create_app(config_name):
 
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
                 else:
-                    response = {
-                        'message': 'That shopping list already exists.'
-                    }
+                    response = {'message': 'That shopping list already exists.'}
                     return make_response(jsonify(response)), 401
         else:
             # GET
@@ -481,9 +446,8 @@ def create_app(config_name):
             response.status_code = 200
             return response
         else:
-            return {
-                       "message": "You do not have permissions to view that shopping list"
-                   }, 403
+            response = {"message": "You do not have permissions to view that shopping list"}
+            return make_response(jsonify(response)), 403
 
     @app.route('/shopping_lists/<list_id>', methods=['PUT'])
     @token_required
@@ -496,9 +460,7 @@ def create_app(config_name):
             description = str(request.data.get('description', ''))
 
             if not re.match("^[a-zA-Z0-9 _]*$", name):
-                response = {
-                    'message': 'The list name cannot contain special characters. Only underscores'
-                }
+                response = {'message': 'The list name cannot contain special characters. Only underscores'}
                 return make_response(jsonify(response)), 400
 
             s_list = models.ShoppingList.query.filter(func.lower(ShoppingList.name) == name.lower()).first()
@@ -524,18 +486,14 @@ def create_app(config_name):
 
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
                 else:
-                    return {
-                               "message": "You do not have permissions to edit that shopping list"
-                           }, 403
+                    response = {"message": "You do not have permissions to edit that shopping list"}
+                    return make_response(jsonify(response)), 403
             else:
-                return {
-                           "message": "Shopping list already exists"
-                       }, 401
+                response = {"message": "Shopping list already exists"}
+                return make_response(jsonify(response)), 401
 
     @app.route('/shopping_lists/<list_id>', methods=['DELETE'])
     @token_required
@@ -550,13 +508,11 @@ def create_app(config_name):
         if request.method == 'DELETE':
             if shopping_list.user_id == user_id:
                 shopping_list.delete()
-                return {
-                           "message": "Shopping list {} deleted successfully".format(shopping_list.id)
-                       }, 200
+                response = {"message": "Shopping list {} deleted successfully".format(shopping_list.id)}
+                return make_response(jsonify(response)), 200
             else:
-                return {
-                           "message": "You do not have permissions to delete that shopping list"
-                       }, 403
+                response = {"message": "You do not have permissions to delete that shopping list"}
+                return make_response(jsonify(response)), 403
 
     """ ********************************* Shopping List Items ********************************* """
 
@@ -570,9 +526,7 @@ def create_app(config_name):
 
             if name:
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
-                    response = {
-                        'message': 'The item name cannot contain special characters. Only underscores'
-                    }
+                    response = {'message': 'The item name cannot contain special characters. Only underscores'}
                     return make_response(jsonify(response)), 400
 
                 s_list_item = \
@@ -600,14 +554,10 @@ def create_app(config_name):
 
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
                 else:
-                    response = {
-                        'message': 'That item item already exists.'
-                    }
+                    response = {'message': 'That item item already exists.'}
                     return make_response(jsonify(response)), 401
         else:
             # GET
@@ -682,9 +632,8 @@ def create_app(config_name):
             response.status_code = 201
             return response
         else:
-            return {
-                       "message": "You do not have permissions to view that item"
-                   }, 403
+            response = {"message": "You do not have permissions to view that item"}
+            return make_response(jsonify(response)), 403
 
     @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['PUT'])
     @token_required
@@ -699,9 +648,7 @@ def create_app(config_name):
             unit_price = str(request.data.get('unit_price', ''))
 
             if not re.match("^[a-zA-Z0-9 _]*$", name):
-                response = {
-                    'message': 'The item name cannot contain special characters. Only underscores'
-                }
+                response = {'message': 'The item name cannot contain special characters. Only underscores'}
                 return make_response(jsonify(response)), 400
 
             s_list_item = \
@@ -731,18 +678,14 @@ def create_app(config_name):
 
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
-                        response = {
-                            'message': str(e)
-                        }
+                        response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
                 else:
-                    return {
-                               "message": "You do not have permissions to edit that item"
-                           }, 403
+                    response = {"message": "You do not have permissions to edit that item"}
+                    return make_response(jsonify(response)), 403
             else:
-                return {
-                           "message": "Item already exists"
-                       }, 401
+                response = {"message": "Item already exists"}
+                return make_response(jsonify(response)), 401
 
     @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['DELETE'])
     @token_required
@@ -758,13 +701,11 @@ def create_app(config_name):
         if request.method == 'DELETE':
             if shopping_list.user_id == user_id:
                 shopping_list.delete()
-                return {
-                           "message": "Item {} deleted successfully".format(shopping_list.id)
-                       }, 201
+                response = {"message": "Item {} deleted successfully".format(shopping_list.id)}
+                return make_response(jsonify(response)), 201
             else:
-                return {
-                           "message": "You do not have permissions to delete that item"
-                       }, 403
+                response = {"message": "You do not have permissions to delete that item"}
+                return make_response(jsonify(response)), 403
 
     """ ************************************ Friend System ************************************ """
 
@@ -789,7 +730,9 @@ def create_app(config_name):
                 return make_response(jsonify(response)), 401
 
             if friend_id:
-                friend = Friend.query.filter(Friend.user1 == user_id, Friend.user2 == friend_id).first()
+                friend = Friend.query.\
+                    filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
+                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id))), Friend.accepted).first()
 
                 if not friend:
                     # The users are not friends
@@ -818,7 +761,9 @@ def create_app(config_name):
                 friend_list = []
 
                 for r_fr in result:
-                    output = Friend.query.filter_by(user1=user_id, user2=r_fr.id, accepted=True).all()
+                    output = Friend.query.\
+                        filter(or_((and_(Friend.user1 == user_id, Friend.user2 == r_fr.id)),
+                                   (and_(Friend.user1 == r_fr.id, Friend.user2 == user_id))), Friend.accepted).all()
 
                 if not output:
                     response = {'message': 'You have no friends with that username'}
@@ -837,7 +782,8 @@ def create_app(config_name):
                 return response
 
             friends = []
-            friend_list = Friend.query.filter_by(user1=user_id, accepted=True).all()
+            friend_list = Friend.query.\
+                filter(or_(Friend.user1 == user_id, Friend.user2 == user_id), Friend.accepted).all()
 
             if not friend_list:
                 response = {'message': 'You have no friends'}
@@ -889,5 +835,32 @@ def create_app(config_name):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': str(e)}
                 return make_response(jsonify(response)), 401
+
+    @app.route('/friends', methods=['DELETE'])
+    @token_required
+    def delete_friend(user_id):
+        try:
+            friend_id = int(request.data.get('friend_id', ''))
+            friend = Friend.query. \
+                filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
+                           (and_(Friend.user1 == friend_id, Friend.user2 == user_id))), Friend.accepted).first()
+        except Exception as e:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': str(e)}
+            return make_response(jsonify(response)), 401
+
+        if request.method == 'DELETE':
+            if not friend:
+                response = {'message': 'You are not friends with that user'}
+                return make_response(jsonify(response)), 404
+
+            if friend.user1 == user_id or friend.user2 == user_id:
+                friend.delete()
+
+                response = {"message": "Friend deleted successfully"}
+                return make_response(jsonify(response)), 201
+            else:
+                response = {"message": "You do not have permissions to perform that action"}
+                return make_response(jsonify(response)), 403
 
     return app
