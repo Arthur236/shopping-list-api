@@ -197,6 +197,8 @@ class Friend(db.Model):
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
+    shared_lists = db.relationship(
+        'SharedList', order_by='SharedList.id', cascade="all, delete-orphan")
 
     def __init__(self, user1, user2):
         """
@@ -224,3 +226,45 @@ class Friend(db.Model):
         Return a representation of a friend instance
         """
         return "<Friend: {}>".format(self.user1)
+
+
+class SharedList(db.Model):
+    """
+    This class represents the shared lists table
+    """
+
+    __tablename__ = 'shared_lists'
+
+    id = db.Column(db.Integer, primary_key=True)
+    friendship_id = db.Column(db.Integer, db.ForeignKey(Friend.id))
+    list_id = db.Column(db.Integer, db.ForeignKey(ShoppingList.id))
+    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+    date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                              onupdate=db.func.current_timestamp())
+
+    def __init__(self, friendship_id, list_id):
+        """
+        Initialize shared list
+        """
+        self.friendship_id = friendship_id
+        self.list_id = list_id
+
+    def save(self):
+        """
+        Save a shared list
+        """
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        """
+        Stop sharing list
+        """
+        db.session.delete(self)
+        db.session.commit()
+
+    def __repr__(self):
+        """
+        Return a representation of a shared list instance
+        """
+        return "<SharedList: {}>".format(self.list_id)
