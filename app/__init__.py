@@ -858,7 +858,7 @@ def create_app(config_name):
                 friend.delete()
 
                 response = {"message": "Friend deleted successfully"}
-                return make_response(jsonify(response)), 201
+                return make_response(jsonify(response)), 200
             else:
                 response = {"message": "You do not have permissions to perform that action"}
                 return make_response(jsonify(response)), 403

@@ -4,7 +4,6 @@ Tests for authentication blueprint
 import unittest
 import json
 from app import create_app, db
-from app.models import User
 
 
 class AuthTestCase(unittest.TestCase):
@@ -137,7 +136,7 @@ class AuthTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # get all the users by making a GET request
-        res = self.client().get('/admin/users', headers={'x-access-token': access_token},)
+        res = self.client().get('/users', headers={'x-access-token': access_token},)
         self.assertEqual(res.status_code, 200)
         self.assertIn('user1', str(res.data))
 
@@ -179,3 +178,16 @@ class AuthTestCase(unittest.TestCase):
         # get all the users by making a GET request
         res = self.client().delete('/admin/users/2', headers={'x-access-token': access_token}, )
         self.assertEqual(res.status_code, 200)
+
+    def tearDown(self):
+        """
+        Delete all initialized variables
+        """
+        with self.app.app_context():
+            # drop all tables
+            db.session.remove()
+            db.drop_all()
+
+    # Make the tests conveniently executable
+    if __name__ == "__main__":
+        unittest.main()
