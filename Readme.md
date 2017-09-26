@@ -93,3 +93,7 @@ Access the endpoints using your preferred client e.g. Postman
 | /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;  | GET     | Get a list item          | TRUE           |
 | /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;  | PUT     | Edit a list item         | TRUE           |
 | /shopping_lists/&lt;int:list_id&gt;/items/&lt;int:item_id&gt;  | DELETE  | Delete a list item       | TRUE           |
+| /friends/                                                      | GET     | Get all friends          | TRUE           |
+| /friends/                                                      | POST    | Send friend request      | TRUE           |
+| /friends/                                                      | PUT     | Accept friend request    | TRUE           |
+| /friends/                                                      | DELETE  | Delete a list item       | TRUE           |
