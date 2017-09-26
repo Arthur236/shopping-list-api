@@ -23,6 +23,8 @@ class User(db.Model):
                               onupdate=db.func.current_timestamp())
     shopping_lists = db.relationship(
         'ShoppingList', order_by='ShoppingList.id', cascade="all, delete-orphan")
+    friends = db.relationship(
+        'Friend', order_by='Friend.id', cascade="all, delete-orphan")
 
     def __init__(self, username, email, password):
         """
@@ -179,3 +181,45 @@ class PasswordReset(db.Model):
         Return a representation of a reset instance
         """
         return "<PasswordReset: {}>".format(self.token)
+
+    class Friend(db.Model):
+        """
+        This class represents the friends table
+        """
+
+        __tablename__ = 'friends'
+
+        id = db.Column(db.Integer, primary_key=True)
+        user1 = db.Column(db.Integer, db.ForeignKey(User.id))
+        user2 = db.Column(db.Integer, db.ForeignKey(User.id))
+        accepted = db.Column(db.Boolean, nullable=False, default=False)
+        date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+        date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
+                                  onupdate=db.func.current_timestamp())
+
+        def __init__(self, user1, user2):
+            """
+            Initialize friend
+            """
+            self.user1 = user1
+            self.user2 = user2
+
+        def save(self):
+            """
+            Save a friend
+            """
+            db.session.add(self)
+            db.session.commit()
+
+        def delete(self):
+            """
+            Deletes a friend
+            """
+            db.session.delete(self)
+            db.session.commit()
+
+        def __repr__(self):
+            """
+            Return a representation of a friend instance
+            """
+            return "<Friend: {}>".format(self.user1)
