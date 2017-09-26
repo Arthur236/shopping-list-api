@@ -19,7 +19,7 @@ db = SQLAlchemy()
 
 
 def create_app(config_name):
-    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset
+    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset, Friend
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
@@ -255,24 +255,16 @@ def create_app(config_name):
                         }
                         return make_response(jsonify(response)), 401
 
-    @app.route('/admin/users', methods=['GET'])
+    @app.route('/users', methods=['GET'])
     @token_required
     def get_all_users(user_id):
-        user = User.query.filter_by(id=user_id).first()
-
-        if not user.admin:
-            response = {
-                'message': 'Cannot perform that operation without admin rights'
-            }
-            return make_response(jsonify(response)), 403
-
         search_query = request.args.get("q")
         limit = int(request.args.get('limit', 10))
         page = int(request.args.get('page', 1))
 
         if search_query:
             # if parameter q is specified
-            result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
+            result = User.query.filter(User.username.ilike('%' + search_query + '%'))
             output = []
 
             if not result:
@@ -280,14 +272,18 @@ def create_app(config_name):
                 return make_response(jsonify(response)), 404
 
             for user in result:
-                obj = {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'date_created': user.date_created,
-                    'date_modified': user.date_modified
-                }
-                output.append(obj)
+                if user.id == user_id:
+                    continue
+                else:
+                    obj = {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'date_created': user.date_created,
+                        'date_modified': user.date_modified
+                    }
+                    output.append(obj)
+
             response = jsonify(output)
             response.status_code = 200
             return response
@@ -300,18 +296,24 @@ def create_app(config_name):
             return make_response(jsonify(response)), 404
 
         for user in paginated_users.items:
-            obj = {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'admin': user.admin,
-                'date_created': user.date_created,
-                'date_modified': user.date_modified
-            }
-            users.append(obj)
+            if user.id == user_id:
+                continue
+            else:
+                obj = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'admin': user.admin,
+                    'date_created': user.date_created,
+                    'date_modified': user.date_modified
+                }
+                users.append(obj)
+
         response = jsonify(users)
         response.status_code = 200
         return response
+
+    """ ********************************** Admin Operations *********************************** """
 
     @app.route('/admin/users/<id>', methods=['GET'])
     @token_required
@@ -364,6 +366,8 @@ def create_app(config_name):
 
         response = {'message': 'User deleted successfully'}
         return make_response(jsonify(response)), 200
+
+    """ *********************************** Shopping Lists ************************************ """
 
     @app.route('/shopping_lists', methods=['POST', 'GET'])
     @token_required
@@ -554,6 +558,8 @@ def create_app(config_name):
                 return {
                            "message": "You do not have permissions to delete that shopping list"
                        }, 403
+
+    """ ********************************* Shopping List Items ********************************* """
 
     @app.route('/shopping_lists/<list_id>/items', methods=['POST', 'GET'])
     @token_required
@@ -760,5 +766,104 @@ def create_app(config_name):
                 return {
                            "message": "You do not have permissions to delete that item"
                        }, 403
+
+    """ ************************************ Friend System ************************************ """
+
+    @app.route('/friends', methods=['GET', 'POST'])
+    @token_required
+    def get_friends_list(user_id):
+        if request.method == "POST":
+            try:
+                friend_id = int(request.data.get('friend_id', ''))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': str(e)}
+                return make_response(jsonify(response)), 401
+
+            if friend_id == user_id:
+                response = {'message': 'You cannot befriend yourself'}
+                return make_response(jsonify(response)), 403
+
+            check_user_exists = User.query.filter_by(id=friend_id).first()
+            if not check_user_exists:
+                response = {'message': 'That user does not exist'}
+                return make_response(jsonify(response)), 401
+
+            if friend_id:
+                friend = Friend.query.filter(Friend.user1 == user_id, Friend.user2 == friend_id).first()
+
+                if not friend:
+                    # The users are not friends
+                    try:
+
+                        friend = Friend(user1=user_id, user2=friend_id)
+                        friend.save()
+
+                        response = jsonify({
+                            'id': friend.id,
+                            'user1': friend.user1,
+                            'user2': friend.user2,
+                            'date_created': friend.date_created,
+                            'date_modified': friend.date_modified
+                        })
+                        response.status_code = 201
+                        return response
+
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {'message': str(e)}
+                        return make_response(jsonify(response)), 401
+                else:
+                    response = {'message': 'You are already friends'}
+                    return make_response(jsonify(response)), 401
+        else:
+            # GET
+            search_query = request.args.get("q")
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+
+            if search_query:
+                # if parameter q is specified
+                result = Friend.query.filter(Friend.user2.ilike('%' + search_query + '%')).\
+                    filter_by(user1=user_id).all()
+                output = []
+
+                if not result:
+                    response = {'message': 'You have no friends'}
+                    return make_response(jsonify(response)), 404
+
+                for friend in result:
+                    user = User.query.filter_by(id=friend.user2)
+                    obj = {
+                        'username': user.username,
+                        'email': user.email
+                    }
+                    output.append(obj)
+
+                response = jsonify(output)
+                response.status_code = 200
+                return response
+
+            friends = []
+            friend_list = Friend.query.filter_by(user1=user_id).all()
+
+            if not friend_list:
+                response = {'message': 'You have no friends'}
+                return make_response(jsonify(response)), 404
+
+            for friend in friend_list:
+                paginated_users = User.query.filter_by(id=friend.user2).\
+                    order_by(User.username.asc()).paginate(page, limit)
+
+                for user in paginated_users.items:
+                    obj = {
+                        'username': user.username,
+                        'email': user.email
+                    }
+                    friends.append(obj)
+
+            response = jsonify(friends)
+            response.status_code = 200
+            return response
 
     return app
