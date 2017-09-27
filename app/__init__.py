@@ -19,7 +19,7 @@ db = SQLAlchemy()
 
 
 def create_app(config_name):
-    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset, Friend
+    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset, Friend, SharedList
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
@@ -732,7 +732,7 @@ def create_app(config_name):
             if friend_id:
                 friend = Friend.query.\
                     filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
-                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id))), Friend.accepted).first()
+                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id)))).first()
 
                 if not friend:
                     # The users are not friends
@@ -747,8 +747,11 @@ def create_app(config_name):
                         # An error occurred, therefore return a string message containing the error
                         response = {'message': str(e)}
                         return make_response(jsonify(response)), 401
-                else:
+                elif friend.accepted:
                     response = {'message': 'You are already friends'}
+                    return make_response(jsonify(response)), 401
+                else:
+                    response = {'message': 'Friend request already sent'}
                     return make_response(jsonify(response)), 401
         else:
             # GET
@@ -759,18 +762,24 @@ def create_app(config_name):
             if search_query:
                 result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
                 friend_list = []
+                search_output = []
 
                 for r_fr in result:
                     output = Friend.query.\
                         filter(or_((and_(Friend.user1 == user_id, Friend.user2 == r_fr.id)),
-                                   (and_(Friend.user1 == r_fr.id, Friend.user2 == user_id))), Friend.accepted).all()
+                                   (and_(Friend.user1 == r_fr.id, Friend.user2 == user_id))), Friend.accepted).first()
+                    if output:
+                        if output.user1 != user_id:
+                            search_output.append(output.user1)
+                        elif output.user2 != user_id:
+                            search_output.append(output.user2)
 
-                if not output:
+                if not search_output:
                     response = {'message': 'You have no friends with that username'}
                     return make_response(jsonify(response)), 404
 
-                for friend in output:
-                    user = User.query.filter_by(id=friend.user2).first()
+                for friend in search_output:
+                    user = User.query.filter_by(id=friend).first()
                     obj = {
                         'username': user.username,
                         'email': user.email
@@ -862,5 +871,103 @@ def create_app(config_name):
             else:
                 response = {"message": "You do not have permissions to perform that action"}
                 return make_response(jsonify(response)), 403
+
+    """ ************************************ Share System ************************************* """
+
+    @app.route('/shopping_lists/share', methods=['GET', 'POST'])
+    @token_required
+    def shared_lists(user_id):
+        if request.method == "POST":
+            try:
+                list_id = int(request.data.get('list_id', ''))
+                friend_id = int(request.data.get('friend_id', ''))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': str(e)}
+                return make_response(jsonify(response)), 401
+
+            if list_id and friend_id:
+                # Check if the users are already friends
+                friend = Friend.query. \
+                    filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
+                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id))), Friend.accepted).first()
+
+                if friend:
+                    # The users are friends
+                    try:
+                        shared_list = SharedList(list_id, user_id, friend_id)
+                        shared_list.save()
+
+                        response = {'message': 'Shopping list shared successfully'}
+                        return make_response(jsonify(response)), 200
+
+                    except Exception as e:
+                        # An error occurred, therefore return a string message containing the error
+                        response = {'message': str(e)}
+                        return make_response(jsonify(response)), 401
+                else:
+                    response = {'message': 'Lists can only be shared to friends'}
+                    return make_response(jsonify(response)), 401
+        else:
+            # GET
+            search_query = request.args.get("q")
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+
+            if search_query:
+                shared_lists = []
+                search_output = []
+                # Get lists that match criteria
+                result = ShoppingList.query. \
+                    filter(ShoppingList.name.ilike('%' + search_query + '%')).all()
+
+                if result:
+                    for res in result:
+                        # Get ids of lists that have been shared
+                        output = SharedList.query. \
+                            filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).\
+                            filter_by(list_id=res.id).first()
+                        if output:
+                            search_output.append(output)
+
+                if not search_output:
+                    response = {'message': 'You have no shopping lists that match that criteria'}
+                    return make_response(jsonify(response)), 404
+
+                for list_out in search_output:
+                    # Get names of lists that have been shared
+                    sha_list = ShoppingList.query.filter_by(id=list_out.list_id).first()
+                    obj = {
+                        'id': sha_list.id,
+                        'name': sha_list.name
+                    }
+                    shared_lists.append(obj)
+
+                response = jsonify(shared_lists)
+                response.status_code = 200
+                return response
+
+            shared_lists = []
+            shared_list = SharedList.query.\
+                filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).all()
+
+            if not shared_list:
+                response = {'message': 'You have no shared lists'}
+                return make_response(jsonify(response)), 404
+
+            for s_list in shared_list:
+                paginated_lists = ShoppingList.query.filter_by(id=s_list.list_id).\
+                    order_by(ShoppingList.name.asc()).paginate(page, limit)
+
+                for sha_list in paginated_lists.items:
+                    obj = {
+                        'id': sha_list.id,
+                        'name': sha_list.name
+                    }
+                    shared_lists.append(obj)
+
+            response = jsonify(shared_lists)
+            response.status_code = 200
+            return response
 
     return app

@@ -23,8 +23,6 @@ class User(db.Model):
                               onupdate=db.func.current_timestamp())
     shopping_lists = db.relationship(
         'ShoppingList', order_by='ShoppingList.id', cascade="all, delete-orphan")
-    friends = db.relationship(
-        'Friend', order_by='Friend.id', cascade="all, delete-orphan")
 
     def __init__(self, username, email, password):
         """
@@ -65,6 +63,8 @@ class ShoppingList(db.Model):
                               onupdate=db.func.current_timestamp())
     shopping_list_items = db.relationship(
         'ShoppingListItem', order_by='ShoppingListItem.id', cascade="all, delete-orphan")
+    shared_lists = db.relationship(
+        'SharedList', order_by='SharedList.id', cascade="all, delete-orphan")
 
     def __init__(self, user_id, name, description):
         """
@@ -191,14 +191,12 @@ class Friend(db.Model):
     __tablename__ = 'friends'
 
     id = db.Column(db.Integer, primary_key=True)
-    user1 = db.Column(db.Integer, db.ForeignKey(User.id))
+    user1 = db.Column(db.Integer)
     user2 = db.Column(db.Integer)
     accepted = db.Column(db.Boolean, nullable=False, default=False)
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
-    shared_lists = db.relationship(
-        'SharedList', order_by='SharedList.id', cascade="all, delete-orphan")
 
     def __init__(self, user1, user2):
         """
@@ -236,18 +234,20 @@ class SharedList(db.Model):
     __tablename__ = 'shared_lists'
 
     id = db.Column(db.Integer, primary_key=True)
-    friendship_id = db.Column(db.Integer, db.ForeignKey(Friend.id))
     list_id = db.Column(db.Integer, db.ForeignKey(ShoppingList.id))
+    user1 = db.Column(db.Integer)
+    user2 = db.Column(db.Integer)
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
 
-    def __init__(self, friendship_id, list_id):
+    def __init__(self, list_id, user1, user2):
         """
         Initialize shared list
         """
-        self.friendship_id = friendship_id
         self.list_id = list_id
+        self.user1 = user1
+        self.user2 = user2
 
     def save(self):
         """
