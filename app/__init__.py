@@ -231,8 +231,13 @@ def create_app(config_name):
     @token_required
     def get_all_users(user_id):
         search_query = request.args.get("q")
-        limit = int(request.args.get('limit', 10))
-        page = int(request.args.get('page', 1))
+        try:
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+        except Exception as e:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
 
         if search_query:
             # if parameter q is specified
@@ -382,8 +387,13 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
-            limit = int(request.args.get('limit', 10))
-            page = int(request.args.get('page', 1))
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
 
             if search_query:
                 # if parameter q is specified
@@ -562,8 +572,13 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
-            limit = int(request.args.get('limit', 10))
-            page = int(request.args.get('page', 1))
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
             
             if search_query:
                 # if parameter q is specified
@@ -756,8 +771,13 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
-            limit = int(request.args.get('limit', 10))
-            page = int(request.args.get('page', 1))
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
 
             if search_query:
                 result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
@@ -916,8 +936,13 @@ def create_app(config_name):
         else:
             # GET
             search_query = request.args.get("q")
-            limit = int(request.args.get('limit', 10))
-            page = int(request.args.get('page', 1))
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
 
             if search_query:
                 shared_lists = []
