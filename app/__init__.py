@@ -894,6 +894,11 @@ def create_app(config_name):
 
                 if friend:
                     # The users are friends
+                    check_shared = SharedList.query.filter_by(user1=user_id, user2=friend_id, list_id=list_id).first()
+                    if check_shared:
+                        response = {'message': 'That list has already been shared'}
+                        return make_response(jsonify(response)), 401
+
                     try:
                         shared_list = SharedList(list_id, user_id, friend_id)
                         shared_list.save()
@@ -969,5 +974,32 @@ def create_app(config_name):
             response = jsonify(shared_lists)
             response.status_code = 200
             return response
+
+    @app.route('/shopping_lists/share', methods=['DELETE'])
+    @token_required
+    def stop_sharing(user_id):
+        if request.method == "DELETE":
+            try:
+                list_id = int(request.data.get('list_id', ''))
+                friend_id = int(request.data.get('friend_id', ''))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': str(e)}
+                return make_response(jsonify(response)), 401
+
+            if list_id and friend_id:
+                shared_list = SharedList.query.\
+                    filter(or_((and_(SharedList.user1 == user_id, SharedList.user2 == friend_id)),
+                               and_(SharedList.user1 == friend_id, SharedList.user2 == user_id))).\
+                    filter_by(list_id=list_id).first()
+
+                if shared_list:
+                    shared_list.delete()
+
+                    response = {'message': 'List sharing stopped successfully'}
+                    return make_response(jsonify(response)), 200
+                else:
+                    response = {'message': 'That list has not been shared'}
+                    return make_response(jsonify(response)), 404
 
     return app
