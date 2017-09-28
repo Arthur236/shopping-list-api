@@ -91,11 +91,33 @@ class ShareTestCase(unittest.TestCase):
                                  data={'list_id': 1, 'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
+        # Try to share list twice
+        res = self.client().post('/shopping_lists/share',
+                                 headers={'x-access-token': access_token},
+                                 data={'list_id': 1, 'friend_id': 3})
+        self.assertEqual(res.status_code, 401)
+
+        # Try to share list with non friend
+        res = self.client().post('/shopping_lists/share',
+                                 headers={'x-access-token': access_token},
+                                 data={'list_id': 1, 'friend_id': 368})
+        self.assertEqual(res.status_code, 401)
+
+        # Use the wrong friend id and list id formats
+        res = self.client().post('/shopping_lists/share',
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 'one', 'list_id': 'one'})
+        self.assertEqual(res.status_code, 401)
+
     def test_get_shared_lists(self):
         """
         Test whether a user can get shared shopping lists
         """
         access_token = self.setup_users()
+
+        # Try to get lists when non are shared
+        res = self.client().get('/shopping_lists/share', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
 
         # Share list
         res = self.client().post('/shopping_lists/share',
@@ -105,6 +127,21 @@ class ShareTestCase(unittest.TestCase):
 
         # Get lists
         res = self.client().get('/shopping_lists/share', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+        # Use the wrong limit and page data formats
+        res = self.client().get('/shopping_lists/share?page=one&limit=two',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
+        # Try to search list that doesnt exist
+        res = self.client().get('/shopping_lists/share?q=yuujk',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+        # Try to search list that exists
+        res = self.client().get('/shopping_lists/share?q=test',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
     def test_stop_sharing_list(self):
@@ -124,6 +161,18 @@ class ShareTestCase(unittest.TestCase):
                                    headers={'x-access-token': access_token},
                                    data={'list_id': 1, 'friend_id': 3})
         self.assertEqual(res.status_code, 200)
+
+        # Try to remove a list thats not shared
+        res = self.client().delete('/shopping_lists/share',
+                                   headers={'x-access-token': access_token},
+                                   data={'list_id': 1, 'friend_id': 3})
+        self.assertEqual(res.status_code, 404)
+
+        # Use the wrong friend id and list id formats
+        res = self.client().post('/shopping_lists/share',
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 'one', 'list_id': 'one'})
+        self.assertEqual(res.status_code, 401)
 
     def tearDown(self):
         """
