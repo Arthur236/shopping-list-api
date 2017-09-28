@@ -63,6 +63,26 @@ class FriendTestCase(unittest.TestCase):
                                  headers={'x-access-token': access_token}, data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
+        # Try to send request twice
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 3})
+        self.assertEqual(res.status_code, 401)
+
+        # Use the wrong friend id format
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+        self.assertEqual(res.status_code, 401)
+
+        # Try to befriend yourself
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 2})
+        self.assertEqual(res.status_code, 403)
+
+        # Try to befriend user that doesnt exist
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 256})
+        self.assertEqual(res.status_code, 401)
+
     def test_accept_request(self):
         """
         Test user can accept friend request
@@ -75,17 +95,34 @@ class FriendTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Login as other user
-        login_res = self.client().post('/auth/login', data={
-            'email': 'user2@gmail.com',
-            'password': 'password'
-        })
+        login_res = self.client().post('/auth/login', data=self.user2)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Use the wrong friend id format
+        res = self.client().put('/friends',
+                                headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+        self.assertEqual(res.status_code, 401)
+
+        # Try to accept friend request that has not been sent
+        res = self.client().put('/friends',
+                                headers={'x-access-token': access_token}, data={'friend_id': 652})
+        self.assertEqual(res.status_code, 404)
 
         # Accept friend request
         res = self.client().put('/friends',
                                 headers={'x-access-token': access_token}, data={'friend_id': 2})
         self.assertEqual(res.status_code, 200)
+
+        # Try to accept friend request twice
+        res = self.client().put('/friends',
+                                headers={'x-access-token': access_token}, data={'friend_id': 2})
+        self.assertEqual(res.status_code, 403)
+
+        # Try to befriend user you are already friends with
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 2})
+        self.assertEqual(res.status_code, 401)
 
     def test_get_friends(self):
         """
@@ -99,12 +136,18 @@ class FriendTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Login as other user
-        login_res = self.client().post('/auth/login', data={
-            'email': 'user2@gmail.com',
-            'password': 'password'
-        })
+        login_res = self.client().post('/auth/login', data=self.user2)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Try to get friends when you have none
+        res = self.client().get('/friends', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+        # Use the wrong friend id format
+        res = self.client().post('/friends',
+                                 headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+        self.assertEqual(res.status_code, 401)
 
         # Accept friend request
         res = self.client().put('/friends',
@@ -113,6 +156,18 @@ class FriendTestCase(unittest.TestCase):
 
         # Get user after they have accepted request
         res = self.client().get('/friends', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+        # Use the wrong limit and page data formats
+        res = self.client().get('/friends?page=one&limit=two', headers={'x-access-token': access_token}, )
+        self.assertEqual(res.status_code, 401)
+
+        # Try to search friend that doesnt exist
+        res = self.client().get('/friends?q=vhjk', headers={'x-access-token': access_token}, )
+        self.assertEqual(res.status_code, 404)
+
+        # Try to search friend that exists
+        res = self.client().get('/friends?q=user', headers={'x-access-token': access_token}, )
         self.assertEqual(res.status_code, 200)
 
     def test_remove_friend(self):
@@ -127,10 +182,7 @@ class FriendTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Login as other user
-        login_res = self.client().post('/auth/login', data={
-            'email': 'user2@gmail.com',
-            'password': 'password'
-        })
+        login_res = self.client().post('/auth/login', data=self.user2)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
 
@@ -139,10 +191,20 @@ class FriendTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token}, data={'friend_id': 2})
         self.assertEqual(res.status_code, 200)
 
+        # Use the wrong friend id format
+        res = self.client().delete('/friends',
+                                   headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+        self.assertEqual(res.status_code, 401)
+
         # Remove friend
         res = self.client().delete('/friends',
                                    headers={'x-access-token': access_token}, data={'friend_id': 2})
         self.assertEqual(res.status_code, 200)
+
+        # Try to remove user you are not friends with
+        res = self.client().delete('/friends',
+                                   headers={'x-access-token': access_token}, data={'friend_id': 2})
+        self.assertEqual(res.status_code, 404)
 
     def tearDown(self):
         """
