@@ -216,7 +216,7 @@ class ShoppingListTestCase(unittest.TestCase):
         Delete all initialized variables
         """
         with self.app.app_context():
-            # drop all tables
+            # Drop all tables
             db.session.remove()
             db.drop_all()
 
