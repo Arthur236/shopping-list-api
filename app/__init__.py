@@ -811,6 +811,7 @@ def create_app(config_name):
                 return response
 
             friends = []
+            friend_ids = []
             friend_list = Friend.query.\
                 filter(or_(Friend.user1 == user_id, Friend.user2 == user_id), Friend.accepted).all()
 
@@ -819,15 +820,17 @@ def create_app(config_name):
                 return make_response(jsonify(response)), 404
 
             for friend in friend_list:
-                paginated_users = User.query.filter_by(id=friend.user2).\
-                    order_by(User.username.asc()).paginate(page, limit)
+                friend_ids.append(friend.user2)
 
-                for user in paginated_users.items:
-                    obj = {
-                        'username': user.username,
-                        'email': user.email
-                    }
-                    friends.append(obj)
+            paginated_users = User.query.filter(User.id.in_(friend_ids)).\
+                order_by(User.username.asc()).paginate(page, limit)
+
+            for user in paginated_users.items:
+                obj = {
+                    'username': user.username,
+                    'email': user.email
+                }
+                friends.append(obj)
 
             response = jsonify(friends)
             response.status_code = 200
@@ -978,6 +981,7 @@ def create_app(config_name):
                 return response
 
             shared_lists = []
+            shared_lists_ids = []
             shared_list = SharedList.query.\
                 filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).all()
 
@@ -986,15 +990,17 @@ def create_app(config_name):
                 return make_response(jsonify(response)), 404
 
             for s_list in shared_list:
-                paginated_lists = ShoppingList.query.filter_by(id=s_list.list_id).\
-                    order_by(ShoppingList.name.asc()).paginate(page, limit)
+                shared_lists_ids.append(s_list.list_id)
 
-                for sha_list in paginated_lists.items:
-                    obj = {
-                        'id': sha_list.id,
-                        'name': sha_list.name
-                    }
-                    shared_lists.append(obj)
+            paginated_lists = ShoppingList.query.filter(ShoppingList.id.in_(shared_lists_ids)).\
+                order_by(ShoppingList.name.asc()).paginate(page, limit)
+
+            for sha_list in paginated_lists.items:
+                obj = {
+                    'id': sha_list.id,
+                    'name': sha_list.name
+                }
+                shared_lists.append(obj)
 
             response = jsonify(shared_lists)
             response.status_code = 200
