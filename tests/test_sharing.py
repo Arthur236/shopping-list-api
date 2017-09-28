@@ -124,3 +124,16 @@ class ShareTestCase(unittest.TestCase):
                                    headers={'x-access-token': access_token},
                                    data={'list_id': 1, 'friend_id': 3})
         self.assertEqual(res.status_code, 200)
+
+    def tearDown(self):
+        """
+        Delete all initialized variables
+        """
+        with self.app.app_context():
+            # drop all tables
+            db.session.remove()
+            db.drop_all()
+
+    # Make the tests conveniently executable
+    if __name__ == "__main__":
+        unittest.main()
