@@ -166,7 +166,7 @@ def create_app(config_name):
                         if token:
                             reset_email = PasswordReset.query.filter_by(email=email).first()
                             if reset_email:
-                                # email already has token so delete it
+                                # Email already has token so delete it
                                 reset_email.delete()
 
                             post_data = request.data
@@ -191,7 +191,7 @@ def create_app(config_name):
 
     @app.route('/auth/password/<token>', methods=['PUT'])
     def password_reset(token):
-        # retrieve email related to token
+        # Retrieve email related to token
         reset_dets = PasswordReset.query.filter_by(token=token).first()
 
         if not reset_dets:
@@ -220,7 +220,7 @@ def create_app(config_name):
                         response = {
                             'message': 'Password reset successfully. Please log in.'
                         }
-                        # return a response notifying the user that they registered successfully
+                        # Return a response notifying the user that they registered successfully
                         return make_response(jsonify(response)), 201
                     except Exception as e:
                         # An error occurred, therefore return a string message containing the error
@@ -331,7 +331,7 @@ def create_app(config_name):
         user = User.query.filter_by(id=id).first()
 
         if not user:
-            response = {'message': 'User does not exist'}
+            response = {'message': 'That user does not exist'}
             return make_response(jsonify(response)), 404
 
         if user.id == user_id:
@@ -402,7 +402,7 @@ def create_app(config_name):
                 output = []
 
                 if not shopping_lists:
-                    response = {'message': 'User has no shopping lists'}
+                    response = {'message': 'You do not have shopping lists matching that criteria'}
                     return make_response(jsonify(response)), 404
 
                 for s_list in shopping_lists:
@@ -423,7 +423,7 @@ def create_app(config_name):
             results = []
 
             if not paginated_lists:
-                response = {'message': 'User has no shopping lists'}
+                response = {'message': 'You have no shopping lists'}
                 return make_response(jsonify(response)), 404
 
             for shopping_list in paginated_lists.items:
@@ -588,7 +588,7 @@ def create_app(config_name):
                 output = []
 
                 if not shopping_list_items:
-                    response = {'message': 'The list has no items'}
+                    response = {'message': 'The list has no items matching that criteria'}
                     return make_response(jsonify(response)), 404
 
                 for list_item in shopping_list_items:
@@ -836,11 +836,10 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/friends', methods=['PUT'])
+    @app.route('/friends/<friend_id>', methods=['PUT'])
     @token_required
-    def accept_friend_request(user_id):
+    def accept_friend_request(user_id, friend_id):
         try:
-            friend_id = int(request.data.get('friend_id', ''))
             friend = Friend.query.filter_by(user1=friend_id, user2=user_id).first()
         except Exception as e:
             # An error occurred, therefore return a string message containing the error
@@ -868,11 +867,10 @@ def create_app(config_name):
                 response = {'message': str(e)}
                 return make_response(jsonify(response)), 401
 
-    @app.route('/friends', methods=['DELETE'])
+    @app.route('/friends/<friend_id>', methods=['DELETE'])
     @token_required
-    def delete_friend(user_id):
+    def delete_friend(user_id, friend_id):
         try:
-            friend_id = int(request.data.get('friend_id', ''))
             friend = Friend.query. \
                 filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
                            (and_(Friend.user1 == friend_id, Friend.user2 == user_id))), Friend.accepted).first()
@@ -1006,22 +1004,21 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    @app.route('/shopping_lists/share', methods=['DELETE'])
+    @app.route('/shopping_lists/share/<list_id>', methods=['DELETE'])
     @token_required
-    def stop_sharing(user_id):
+    def stop_sharing(user_id, list_id):
         if request.method == "DELETE":
             try:
-                list_id = int(request.data.get('list_id', ''))
-                friend_id = int(request.data.get('friend_id', ''))
+                shopping_list = ShoppingList.query.filter_by(id=list_id).first()
             except Exception as e:
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': str(e)}
                 return make_response(jsonify(response)), 401
 
-            if list_id and friend_id:
+            if list_id and shopping_list:
                 shared_list = SharedList.query.\
-                    filter(or_((and_(SharedList.user1 == user_id, SharedList.user2 == friend_id)),
-                               and_(SharedList.user1 == friend_id, SharedList.user2 == user_id))).\
+                    filter(or_((and_(SharedList.user1 == user_id, SharedList.user2 == shopping_list.user_id)),
+                               and_(SharedList.user1 == shopping_list.user_id, SharedList.user2 == user_id))).\
                     filter_by(list_id=list_id).first()
 
                 if shared_list:
