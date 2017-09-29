@@ -1030,4 +1030,73 @@ def create_app(config_name):
                     response = {'message': 'That list has not been shared'}
                     return make_response(jsonify(response)), 404
 
+    @app.route('/shopping_lists/share/<list_id>/items', methods=['GET'])
+    @token_required
+    def get_shared_list_items(user_id, list_id):
+        if request.method == "GET":
+            # Ensure that the list has been shared to that user
+            check_shared = SharedList.query.\
+                filter(and_(SharedList.list_id == list_id,
+                            or_(SharedList.user1 == user_id, SharedList.user2 == user_id))).first()
+
+            if not check_shared:
+                response = {'message': 'You do not have permission to view items on that list'}
+                return make_response(jsonify(response)), 403
+
+            search_query = request.args.get("q")
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except Exception as e:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
+
+            if search_query:
+                # if parameter q is specified
+                shopping_list_items = ShoppingListItem.query. \
+                    filter(ShoppingListItem.name.ilike('%' + search_query + '%')). \
+                    filter_by(list_id=list_id).all()
+                output = []
+
+                if not shopping_list_items:
+                    response = {'message': 'The list has no items matching that criteria'}
+                    return make_response(jsonify(response)), 404
+
+                for list_item in shopping_list_items:
+                    obj = {
+                        'id': list_item.id,
+                        'name': list_item.name,
+                        'quantity': list_item.quantity,
+                        'unit_price': list_item.unit_price,
+                        'date_created': list_item.date_created,
+                        'date_modified': list_item.date_modified
+                    }
+                    output.append(obj)
+                response = jsonify(output)
+                response.status_code = 200
+                return response
+
+            paginated_items = ShoppingListItem.query.filter_by(list_id=list_id). \
+                order_by(ShoppingListItem.name.asc()).paginate(page, limit)
+            results = []
+
+            if not paginated_items:
+                response = {'message': 'The list has no items'}
+                return make_response(jsonify(response)), 404
+
+            for shopping_list_item in paginated_items.items:
+                obj = {
+                    'id': shopping_list_item.id,
+                    'name': shopping_list_item.name,
+                    'quantity': shopping_list_item.quantity,
+                    'unit_price': shopping_list_item.unit_price,
+                    'date_created': shopping_list_item.date_created,
+                    'date_modified': shopping_list_item.date_modified
+                }
+                results.append(obj)
+            response = jsonify(results)
+            response.status_code = 200
+            return response
+
     return app
