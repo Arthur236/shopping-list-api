@@ -33,6 +33,10 @@ class ShareTestCase(unittest.TestCase):
             'name': 'Test shopping list',
             'description': 'Test description'
         }
+        self.shopping_list_item = \
+            {'list_id': 1, 'name': 'Tomatoes', 'quantity': 20, 'unit_price': 5}
+        self.shopping_list_item2 = \
+            {'list_id': 1, 'name': 'Broccoli', 'quantity': 20, 'unit_price': 5}
 
         with self.app.app_context():
             # create all tables
@@ -57,6 +61,15 @@ class ShareTestCase(unittest.TestCase):
                                  data=self.shopping_list)
         self.assertEqual(res.status_code, 201)
 
+        # Add items to the list
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        self.assertEqual(res.status_code, 201)
+
+        res = self.client().post('/shopping_lists/1/items', headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item2)
+        self.assertEqual(res.status_code, 201)
+
         # Send friend request
         res = self.client().post('/friends',
                                  headers={'x-access-token': access_token}, data={'friend_id': 3})
@@ -68,8 +81,8 @@ class ShareTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Accept friend request
-        res = self.client().put('/friends',
-                                headers={'x-access-token': access_token}, data={'friend_id': 2})
+        res = self.client().put('/friends/2',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
         # Log in as first user
@@ -144,6 +157,37 @@ class ShareTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_get_shared_list_items(self):
+        """
+        Test whether a user can get items in a shared list
+        """
+        access_token = self.setup_users()
+
+        # Share list
+        res = self.client().post('/shopping_lists/share',
+                                 headers={'x-access-token': access_token},
+                                 data={'list_id': 1, 'friend_id': 3})
+        self.assertEqual(res.status_code, 200)
+
+        # Get list items
+        res = self.client().get('/shopping_lists/share/1/items', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+        # Use the wrong limit and page data formats
+        res = self.client().get('/shopping_lists/share/1/items?page=one&limit=two',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
+        # Try to search list item that doesnt exist
+        res = self.client().get('/shopping_lists/share/1/items?q=yuujk',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+        # Try to search list that exists
+        res = self.client().get('/shopping_lists/share/1/items?q=tomato',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
     def test_stop_sharing_list(self):
         """
         Test whether a user can stop sharing a shopping list
@@ -157,21 +201,18 @@ class ShareTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Stop sharing
-        res = self.client().delete('/shopping_lists/share',
-                                   headers={'x-access-token': access_token},
-                                   data={'list_id': 1, 'friend_id': 3})
+        res = self.client().delete('/shopping_lists/share/1',
+                                   headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Try to remove a list thats not shared
-        res = self.client().delete('/shopping_lists/share',
-                                   headers={'x-access-token': access_token},
-                                   data={'list_id': 1, 'friend_id': 3})
+        # Try to remove a list that's not shared
+        res = self.client().delete('/shopping_lists/share/1',
+                                   headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-        # Use the wrong friend id and list id formats
-        res = self.client().post('/shopping_lists/share',
-                                 headers={'x-access-token': access_token},
-                                 data={'friend_id': 'one', 'list_id': 'one'})
+        # Use the wrong list id formats
+        res = self.client().delete('/shopping_lists/share/one',
+                                   headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
     def tearDown(self):
@@ -179,7 +220,7 @@ class ShareTestCase(unittest.TestCase):
         Delete all initialized variables
         """
         with self.app.app_context():
-            # drop all tables
+            # Drop all tables
             db.session.remove()
             db.drop_all()
 
