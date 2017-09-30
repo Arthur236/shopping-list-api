@@ -10,6 +10,11 @@ A simple api to a shopping list application
 * Creation of shopping lists
 * Addition of items to a shopping list
 
+## Documentation
+
+The link to the documentation can be found at: 
+>https://awesome-shopping-list-api.herokuapp.com/v1
+
 ## Getting Started
 
 ### Installation and setup
