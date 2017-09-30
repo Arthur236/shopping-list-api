@@ -3,7 +3,7 @@ Initialing the application
 """
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
-from flask import request, jsonify, abort, make_response, current_app
+from flask import request, jsonify, abort, make_response, current_app, redirect
 import re
 from sqlalchemy import func, or_, and_
 import jwt
@@ -71,6 +71,10 @@ def create_app(config_name):
         if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
             return True
         return False
+
+    @app.route('/', methods=['GET'])
+    def index():
+        return redirect('http://docs.shoppinglistapi4.apiary.io')
 
     @app.route('/auth/register', methods=['POST'])
     def register():
