@@ -39,13 +39,13 @@ class ShoppingListTestCase(unittest.TestCase):
 
     def setup_users(self):
         # create users by making POST requests
-        res = self.client().post('/auth/register', data=self.user1)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
-        res = self.client().post('/auth/register', data=self.user2)
+        res = self.client().post('/v1/auth/register', data=self.user2)
         self.assertEqual(res.status_code, 201)
 
         # Log in the first user
-        login_res = self.client().post('/auth/login', data=self.user1)
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
 
@@ -60,7 +60,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Create a shopping list by making a POST request
         res = self.client().post(
-            '/shopping_lists',
+            '/v1/shopping_lists',
             headers={'x-access-token': access_token},
             data=self.shopping_list)
         self.assertEqual(res.status_code, 201)
@@ -68,7 +68,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Create shopping list with special characters
         res = self.client().post(
-            '/shopping_lists',
+            '/v1/shopping_lists',
             headers={'x-access-token': access_token},
             data=self.shopping_list_special)
         self.assertEqual(res.status_code, 400)
@@ -81,40 +81,40 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Create a shopping list by making a POST request
         res = self.client().post(
-            '/shopping_lists',
+            '/v1/shopping_lists',
             headers={'x-access-token': access_token},
             data=self.shopping_list)
         self.assertEqual(res.status_code, 201)
 
         # Get all the shopping lists that belong to the test user by making a GET request
         res = self.client().get(
-            '/shopping_lists',
+            '/v1/shopping_lists',
             headers={'x-access-token': access_token},
         )
         self.assertEqual(res.status_code, 200)
         self.assertIn('Groceries', str(res.data))
 
         # Use the wrong limit and page data formats
-        res = self.client().get('/shopping_lists?page=one&limit=two', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/shopping_lists?page=one&limit=two', headers={'x-access-token': access_token}, )
         self.assertEqual(res.status_code, 401)
 
         # Try search non existent list
         res = self.client().get(
-            '/shopping_lists?q=hdiue',
+            '/v1/shopping_lists?q=hdiue',
             headers={'x-access-token': access_token},
         )
         self.assertEqual(res.status_code, 404)
 
         # Try search non existent list
         res = self.client().get(
-            '/shopping_lists?q=gro',
+            '/v1/shopping_lists?q=gro',
             headers={'x-access-token': access_token},
         )
         self.assertEqual(res.status_code, 200)
 
         # Try get paginated lists when user has no lists
         res = self.client().get(
-            '/shopping_lists?page=1&limit=2',
+            '/v1/shopping_lists?page=1&limit=2',
             headers={'x-access-token': access_token},
         )
         self.assertEqual(res.status_code, 200)
@@ -125,7 +125,7 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                 data=self.shopping_list)
         # Assert that the shopping list is created
         self.assertEqual(rv.status_code, 201)
@@ -133,7 +133,7 @@ class ShoppingListTestCase(unittest.TestCase):
         results = json.loads(rv.data.decode())
 
         result = self.client().get(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         # Assert that the shopping list is actually returned given its ID
         self.assertEqual(result.status_code, 200)
@@ -145,10 +145,10 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                 data={'name': 'Groceries'})
         self.assertEqual(rv.status_code, 201)
-        rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                 data={'name': 'Movies'})
         self.assertEqual(rv.status_code, 201)
         # Get the json with the shopping list
@@ -156,7 +156,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Then, we edit the created shopping list by making a PUT request
         rv = self.client().put(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token},
             data={
                 "name": "Electronics"
@@ -165,7 +165,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Try to edit a list with special characters
         rv = self.client().put(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token},
             data={
                 "name": "Electronics/*-"
@@ -174,7 +174,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Try to give it a name of a list that already exists
         rv = self.client().put(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token},
             data={
                 "name": "Groceries"
@@ -183,7 +183,7 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Finally, we get the edited shopping list to see if it is actually edited.
         results = self.client().get(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertIn('Electronics', str(results.data))
 
@@ -193,7 +193,7 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                 data={'name': 'Consoles'})
         self.assertEqual(rv.status_code, 201)
         # Get the shopping list in json
@@ -201,13 +201,13 @@ class ShoppingListTestCase(unittest.TestCase):
 
         # Delete the shopping list we just created
         res = self.client().delete(
-            '/shopping_lists/{}'.format(results['id']),
+            '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
         # Give a list that doesnt exist
         res = self.client().delete(
-            '/shopping_lists/23',
+            '/v1/shopping_lists/23',
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
