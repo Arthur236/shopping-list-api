@@ -74,30 +74,30 @@ Then run the application using:
 ### Application end points
 Access the endpoints using your preferred client e.g. Postman
 
-| Resource URL                                                   | Method  | Description              | Requires Token |
-|----------------------------------------------------------------|---------|--------------------------|----------------|
-| /auth/register                                                 | POST    | User registration        | FALSE          |
-| /auth/login                                                    | POST    | User login               | FALSE          |
-| /auth/reset                                                    | POST    | Generate reset token     | FALSE          |
-| /auth/password/&lt;token&gt;                                   | PUT     | Reset password           | TRUE           |
-| /users                                                         | GET     | Get all users            | TRUE           |
-| /admin/users/&lt;user_id&gt;                                   | GET     | Get a specific user      | TRUE           |
-| /admin/users/&lt;user_id&gt;                                   | DELETE  | Delete a specific user   | TRUE           |
-| /shopping_lists                                                | POST    | Create shopping list     | TRUE           |
-| /shopping_lists                                                | GET     | Get shopping lists       | TRUE           |
-| /shopping_lists/&lt;list_id&gt;                                | GET     | Get a shopping list      | TRUE           |
-| /shopping_lists/&lt;list_id&gt;                                | PUT     | Edit a shopping list     | TRUE           |
-| /shopping_lists/&lt;list_id&gt;                                | DELETE  | Delete a shopping list   | TRUE           |
-| /shopping_lists/&lt;list_id&gt;/items                          | POST    | Create a list item       | TRUE           |
-| /shopping_lists/&lt;list_id&gt;/items                          | GET     | Get list items           | TRUE           |
-| /shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;          | GET     | Get a list item          | TRUE           |
-| /shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;          | PUT     | Edit a list item         | TRUE           |
-| /shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;          | DELETE  | Delete a list item       | TRUE           |
-| /friends                                                       | GET     | Get all friends          | TRUE           |
-| /friends                                                       | POST    | Send friend request      | TRUE           |
-| /friends/&lt;friend_id&gt;                                     | PUT     | Accept friend request    | TRUE           |
-| /friends/&lt;friend_id&gt;                                     | DELETE  | Delete a list item       | TRUE           |
-| /shopping_lists/share                                          | GET     | Get shared lists         | TRUE           |
-| /shopping_lists/share                                          | POST    | Share a list             | TRUE           |
-| /shopping_lists/share/&lt;list_id&gt;                          | DELETE  | Stop sharing a list      | TRUE           |
-| /shopping_lists/share/&lt;list_id&gt;/items                    | GET     | Get shared list items    | TRUE           |
+| Resource URL                                               | Method  | Description              | Requires Token |
+|------------------------------------------------------------|---------|--------------------------|----------------|
+| /v1/auth/register                                          | POST    | User registration        | FALSE          |
+| /v1/auth/login                                             | POST    | User login               | FALSE          |
+| /v1/auth/reset                                             | POST    | Generate reset token     | FALSE          |
+| /v1/auth/password/&lt;token&gt;                            | PUT     | Reset password           | TRUE           |
+| /v1/users                                                  | GET     | Get all users            | TRUE           |
+| /v1/admin/users/&lt;user_id&gt;                            | GET     | Get a specific user      | TRUE           |
+| /v1/admin/users/&lt;user_id&gt;                            | DELETE  | Delete a specific user   | TRUE           |
+| /v1/shopping_lists                                         | POST    | Create shopping list     | TRUE           |
+| /v1/shopping_lists                                         | GET     | Get shopping lists       | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;                         | GET     | Get a shopping list      | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;                         | PUT     | Edit a shopping list     | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;                         | DELETE  | Delete a shopping list   | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;/items                   | POST    | Create a list item       | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;/items                   | GET     | Get list items           | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;   | GET     | Get a list item          | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;   | PUT     | Edit a list item         | TRUE           |
+| /v1/shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;   | DELETE  | Delete a list item       | TRUE           |
+| /v1/friends                                                | GET     | Get all friends          | TRUE           |
+| /v1/friends                                                | POST    | Send friend request      | TRUE           |
+| /v1/friends/&lt;friend_id&gt;                              | PUT     | Accept friend request    | TRUE           |
+| /v1/friends/&lt;friend_id&gt;                              | DELETE  | Delete a list item       | TRUE           |
+| /v1/shopping_lists/share                                   | GET     | Get shared lists         | TRUE           |
+| /v1/shopping_lists/share                                   | POST    | Share a list             | TRUE           |
+| /v1/shopping_lists/share/&lt;list_id&gt;                   | DELETE  | Stop sharing a list      | TRUE           |
+| /v1/shopping_lists/share/&lt;list_id&gt;/items             | GET     | Get shared list items    | TRUE           |

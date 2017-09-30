@@ -11,11 +11,29 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask_bcrypt import Bcrypt
 
-# local import
+# Local import
 from instance.config import app_config
 
-# initialize sql-alchemy
+# Initialize sql-alchemy
 db = SQLAlchemy()
+
+
+# Middleware for path prefixing
+class PrefixMiddleware(object):
+
+    def __init__(self, app, prefix=''):
+        self.app = app
+        self.prefix = prefix
+
+    def __call__(self, environ, start_response):
+
+        if environ['PATH_INFO'].startswith(self.prefix):
+            environ['PATH_INFO'] = environ['PATH_INFO'][len(self.prefix):]
+            environ['SCRIPT_NAME'] = self.prefix
+            return self.app(environ, start_response)
+        else:
+            start_response('404', [('Content-Type', 'text/plain')])
+            return ["Ooops! Looks like we don't recognize this url.".encode()]
 
 
 def create_app(config_name):
@@ -25,6 +43,7 @@ def create_app(config_name):
     app.config.from_object(app_config[config_name])
     app.config.from_pyfile('config.py')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/v1')
     db.init_app(app)
 
     @app.before_first_request
