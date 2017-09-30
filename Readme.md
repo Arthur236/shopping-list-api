@@ -12,7 +12,7 @@ A simple api to a shopping list application
 
 ## Documentation
 
-The link to the documentation can be found at: 
+The documentation for this API can be found at: 
 >https://awesome-shopping-list-api.herokuapp.com/v1
 
 ## Getting Started
