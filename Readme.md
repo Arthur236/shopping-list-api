@@ -95,8 +95,9 @@ Access the endpoints using your preferred client e.g. Postman
 | /shopping_lists/&lt;list_id&gt;/items/&lt;item_id&gt;          | DELETE  | Delete a list item       | TRUE           |
 | /friends                                                       | GET     | Get all friends          | TRUE           |
 | /friends                                                       | POST    | Send friend request      | TRUE           |
-| /friends                                                       | PUT     | Accept friend request    | TRUE           |
-| /friends                                                       | DELETE  | Delete a list item       | TRUE           |
+| /friends/&lt;friend_id&gt;                                     | PUT     | Accept friend request    | TRUE           |
+| /friends/&lt;friend_id&gt;                                     | DELETE  | Delete a list item       | TRUE           |
 | /shopping_lists/share                                          | GET     | Get shared lists         | TRUE           |
 | /shopping_lists/share                                          | POST    | Share a list             | TRUE           |
-| /shopping_lists/share                                          | DELETE  | Stop sharing a list      | TRUE           |
+| /shopping_lists/share/&lt;list_id&gt;                          | DELETE  | Stop sharing a list      | TRUE           |
+| /shopping_lists/share/&lt;list_id&gt;/items                    | GET     | Get shared list items    | TRUE           |
