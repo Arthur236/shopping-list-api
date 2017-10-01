@@ -6,7 +6,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
-from flask import request, jsonify, abort, make_response, current_app, redirect
+from flask import request, jsonify, make_response, current_app, redirect
 from sqlalchemy import func, or_, and_
 import jwt
 from flask_bcrypt import Bcrypt
@@ -275,7 +275,8 @@ def create_app(config_name):
 
         if search_query:
             # if parameter q is specified
-            result = User.query.filter(User.username.ilike('%' + search_query + '%'))
+            result = User.query.\
+                filter(and_(User.username.ilike('%' + search_query + '%')), User.admin == False)
             output = []
 
             if not result:
@@ -300,7 +301,8 @@ def create_app(config_name):
             return response
 
         users = []
-        paginated_users = User.query.order_by(User.username.asc()).paginate(page, limit)
+        paginated_users = User.query.filter_by(admin=False).\
+            order_by(User.username.asc()).paginate(page, limit)
 
         if not paginated_users:
             response = {'message': 'No users were found'}
@@ -314,7 +316,6 @@ def create_app(config_name):
                     'id': user.id,
                     'username': user.username,
                     'email': user.email,
-                    'admin': user.admin,
                     'date_created': user.date_created,
                     'date_modified': user.date_modified
                 }
