@@ -959,6 +959,76 @@ def create_app(config_name):
             response = {"message": "You do not have permissions to perform that action"}
             return make_response(jsonify(response)), 403
 
+    @app.route('/friends/requests', methods=['GET'])
+    @token_required
+    def get_friend_requests(user_id):
+        """
+        Shows requests a user has received
+        """
+        if request.method == "GET":
+            search_query = request.args.get("q")
+            try:
+                limit = int(request.args.get('limit', 10))
+                page = int(request.args.get('page', 1))
+            except ValueError:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameter provided should be an integer'}
+                return make_response(jsonify(response)), 401
+
+            if search_query:
+                result = User.query.filter(User.username.ilike('%' + search_query + '%')).all()
+                friend_list = []
+                search_output = []
+
+                for r_fr in result:
+                    output = Friend.query. \
+                        filter(and_(Friend.user1 == user_id, Friend.user2 == r_fr.id,
+                                    Friend.accepted == False)).first()
+                    if output:
+                        search_output.append(output.user2)
+
+                if not search_output:
+                    response = {'message': 'You have no request from that user'}
+                    return make_response(jsonify(response)), 404
+
+                for friend in search_output:
+                    user = User.query.filter_by(id=friend).first()
+                    obj = {
+                        'username': user.username,
+                        'email': user.email
+                    }
+                    friend_list.append(obj)
+
+                response = jsonify(friend_list)
+                response.status_code = 200
+                return response
+
+            friends = []
+            friend_ids = []
+            friend_list = Friend.query. \
+                filter(and_(Friend.user1 == user_id, Friend.accepted == False)).all()
+
+            if not friend_list:
+                response = {'message': 'You have no friend requests'}
+                return make_response(jsonify(response)), 404
+
+            for friend in friend_list:
+                friend_ids.append(friend.user2)
+
+            paginated_users = User.query.filter(User.id.in_(friend_ids)). \
+                order_by(User.username.asc()).paginate(page, limit)
+
+            for user in paginated_users.items:
+                obj = {
+                    'username': user.username,
+                    'email': user.email
+                }
+                friends.append(obj)
+
+            response = jsonify(friends)
+            response.status_code = 200
+            return response
+
     # ************************************ Share System *************************************
 
     @app.route('/shopping_lists/share', methods=['GET', 'POST'])
