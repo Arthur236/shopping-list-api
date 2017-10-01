@@ -102,6 +102,7 @@ Access the endpoints using your preferred client e.g. Postman
 | /v1/friends                                                | POST    | Send friend request      | TRUE           |
 | /v1/friends/&lt;friend_id&gt;                              | PUT     | Accept friend request    | TRUE           |
 | /v1/friends/&lt;friend_id&gt;                              | DELETE  | Delete a list item       | TRUE           |
+| /v1/friends/requests                                       | GET     | Get friend requests      | TRUE           |
 | /v1/shopping_lists/share                                   | GET     | Get shared lists         | TRUE           |
 | /v1/shopping_lists/share                                   | POST    | Share a list             | TRUE           |
 | /v1/shopping_lists/share/&lt;list_id&gt;                   | DELETE  | Stop sharing a list      | TRUE           |
