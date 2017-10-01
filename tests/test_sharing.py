@@ -45,6 +45,9 @@ class ShareTestCase(unittest.TestCase):
             db.create_all()
 
     def setup_users(self):
+        """
+        Register and log in users
+        """
         # create users by making POST requests
         res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
@@ -62,17 +65,20 @@ class ShareTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
 
         # Add items to the list
-        res = self.client().post('/v1/shopping_lists/1/items', headers={'x-access-token': access_token},
+        res = self.client().post('/v1/shopping_lists/1/items',
+                                 headers={'x-access-token': access_token},
                                  data=self.shopping_list_item)
         self.assertEqual(res.status_code, 201)
 
-        res = self.client().post('/v1/shopping_lists/1/items', headers={'x-access-token': access_token},
+        res = self.client().post('/v1/shopping_lists/1/items',
+                                 headers={'x-access-token': access_token},
                                  data=self.shopping_list_item2)
         self.assertEqual(res.status_code, 201)
 
         # Send friend request
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, data={'friend_id': 3})
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
         # Login as other user and accept friend request
@@ -129,7 +135,8 @@ class ShareTestCase(unittest.TestCase):
         access_token = self.setup_users()
 
         # Try to get lists when non are shared
-        res = self.client().get('/v1/shopping_lists/share', headers={'x-access-token': access_token})
+        res = self.client().get('/v1/shopping_lists/share',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
         # Share list
@@ -139,7 +146,8 @@ class ShareTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Get lists
-        res = self.client().get('/v1/shopping_lists/share', headers={'x-access-token': access_token})
+        res = self.client().get('/v1/shopping_lists/share',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
         # Use the wrong limit and page data formats
@@ -170,7 +178,8 @@ class ShareTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Get list items
-        res = self.client().get('/v1/shopping_lists/share/1/items', headers={'x-access-token': access_token})
+        res = self.client().get('/v1/shopping_lists/share/1/items',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
         # Use the wrong limit and page data formats

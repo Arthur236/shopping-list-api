@@ -38,6 +38,9 @@ class ShoppingListTestCase(unittest.TestCase):
             db.create_all()
 
     def setup_users(self):
+        """
+        Register and log in users
+        """
         # create users by making POST requests
         res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
@@ -73,7 +76,7 @@ class ShoppingListTestCase(unittest.TestCase):
             data=self.shopping_list_special)
         self.assertEqual(res.status_code, 400)
 
-    def test_api_can_get_all_shopping_lists(self):
+    def test_get_all_shopping_lists(self):
         """
         Test API can get a shopping list (GET request)
         """
@@ -95,37 +98,39 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertIn('Groceries', str(res.data))
 
         # Use the wrong limit and page data formats
-        res = self.client().get('/v1/shopping_lists?page=one&limit=two', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/shopping_lists?page=one&limit=two',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
         # Try search non existent list
         res = self.client().get(
             '/v1/shopping_lists?q=hdiue',
-            headers={'x-access-token': access_token},
+            headers={'x-access-token': access_token}
         )
         self.assertEqual(res.status_code, 404)
 
         # Try search non existent list
         res = self.client().get(
             '/v1/shopping_lists?q=gro',
-            headers={'x-access-token': access_token},
+            headers={'x-access-token': access_token}
         )
         self.assertEqual(res.status_code, 200)
 
         # Try get paginated lists when user has no lists
         res = self.client().get(
             '/v1/shopping_lists?page=1&limit=2',
-            headers={'x-access-token': access_token},
+            headers={'x-access-token': access_token}
         )
         self.assertEqual(res.status_code, 200)
 
-    def test_api_can_get_shopping_list_by_id(self):
+    def test_get_shopping_list_by_id(self):
         """
         Test API can get a single shopping list by using it's id
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists',
+                                headers={'x-access-token': access_token},
                                 data=self.shopping_list)
         # Assert that the shopping list is created
         self.assertEqual(rv.status_code, 201)
@@ -139,16 +144,18 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertEqual(result.status_code, 200)
         self.assertIn('Groceries', str(result.data))
 
-    def test_shopping_list_can_be_edited(self):
+    def test_shopping_list_edit(self):
         """
         Test API can edit an existing shopping list. (PUT request)
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists',
+                                headers={'x-access-token': access_token},
                                 data={'name': 'Groceries'})
         self.assertEqual(rv.status_code, 201)
-        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists',
+                                headers={'x-access-token': access_token},
                                 data={'name': 'Movies'})
         self.assertEqual(rv.status_code, 201)
         # Get the json with the shopping list
@@ -193,7 +200,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         access_token = self.setup_users()
 
-        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+        rv = self.client().post('/v1/shopping_lists',
+                                headers={'x-access-token': access_token},
                                 data={'name': 'Consoles'})
         self.assertEqual(rv.status_code, 201)
         # Get the shopping list in json

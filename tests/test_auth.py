@@ -37,17 +37,20 @@ class AuthTestCase(unittest.TestCase):
         """
         # Test email is correct format
         res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test', 'email': 'test.com', 'password': 'password'})
+                                 data={'username': 'test', 'email': 'test.com',
+                                       'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
         # Test username cannot have special characters
         res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test*/-', 'email': 'test@gmail.com', 'password': 'password'})
+                                 data={'username': 'test*/-', 'email': 'test@gmail.com',
+                                       'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
         # Test password length
         res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test', 'email': 'test@gmail.com', 'password': 'pass'})
+                                 data={'username': 'test', 'email': 'test@gmail.com',
+                                       'password': 'pass'})
         self.assertEqual(res.status_code, 400)
 
         res = self.client().post('/v1/auth/register', data=self.user_data)
@@ -162,12 +165,13 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 201)
 
         # Get all the users by making a GET request
-        res = self.client().get('/v1/users', headers={'x-access-token': access_token},)
+        res = self.client().get('/v1/users', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
         self.assertIn('user1', str(res.data))
 
         # Use the wrong limit and page data formats
-        res = self.client().get('/v1/users?page=one&limit=two', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/users?page=one&limit=two',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
     def test_get_user_by_id(self):
@@ -186,19 +190,19 @@ class AuthTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Get all the users by making a GET request
-        res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
         self.assertIn('user1', str(res.data))
 
         # Try to get non existing user
-        res = self.client().get('/v1/admin/users/26', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/admin/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
         # Try to access without admin rights
         login_res = self.client().post('/v1/auth/login', data=self.user_data)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
-        res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
     def test_delete_user(self):
@@ -213,7 +217,7 @@ class AuthTestCase(unittest.TestCase):
         login_res = self.client().post('/v1/auth/login', data=self.user_data)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
-        res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token}, )
+        res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
         login_res = self.client().post('/v1/auth/login', data={
@@ -224,15 +228,16 @@ class AuthTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Attempt to delete a user
-        res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token}, )
+        res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
         # Attempt to delete a non existent user
-        res = self.client().delete('/v1/admin/users/298', headers={'x-access-token': access_token}, )
+        res = self.client().delete('/v1/admin/users/298',
+                                   headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
         # Attempt to delete yourself
-        res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token}, )
+        res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
     def tearDown(self):

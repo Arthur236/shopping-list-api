@@ -37,6 +37,9 @@ class FriendTestCase(unittest.TestCase):
             db.create_all()
 
     def setup_users(self):
+        """
+        Register and log in users
+        """
         # create user by making a POST request
         res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
@@ -70,7 +73,8 @@ class FriendTestCase(unittest.TestCase):
 
         # Use the wrong friend id format
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 'one'})
         self.assertEqual(res.status_code, 401)
 
         # Try to befriend yourself
@@ -146,7 +150,8 @@ class FriendTestCase(unittest.TestCase):
 
         # Use the wrong friend id format
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, data={'friend_id': 'one'})
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 'one'})
         self.assertEqual(res.status_code, 401)
 
         # Accept friend request
@@ -159,11 +164,12 @@ class FriendTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
 
         # Use the wrong limit and page data formats
-        res = self.client().get('/v1/friends?page=one&limit=two', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/friends?page=one&limit=two',
+                                headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
         # Try to search friend that doesnt exist
-        res = self.client().get('/v1/friends?q=vhjk', headers={'x-access-token': access_token}, )
+        res = self.client().get('/v1/friends?q=vhjk', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
         # Try to search friend that exists
