@@ -65,6 +65,35 @@ def create_app(config_name):
             user.admin = True
             user.save()
 
+    @app.errorhandler(404)
+    def error_404(error):
+        """
+        Handles 404 errors
+        """
+        message = {
+            'status': 404,
+            'message': 'The resource at {}, cannot be found.'.format(request.url)
+        }
+        response = jsonify(message)
+        response.status_code = 404
+
+        return response
+
+    @app.errorhandler(500)
+    def error_500(error):
+        """
+        Handles 500 errors
+        """
+        message = {
+            'status': 500,
+            'message': 'Clean up on isle {}! '
+                       'Our team of experts is working to fix this.'.format(request.url)
+        }
+        response = jsonify(message)
+        response.status_code = 500
+
+        return response
+
     def token_required(f):
         """
         Token decorator method
@@ -120,7 +149,7 @@ def create_app(config_name):
             email = str(request.data.get('email', ''))
             password = str(request.data.get('password', ''))
 
-            if email:
+            if email and password and username:
                 email_resp = validate_email(email)
                 if not email_resp:
                     response = {'message': 'The email is not valid'}
@@ -159,6 +188,9 @@ def create_app(config_name):
                 response = {'message': 'User already exists. Please login.'}
                 return make_response(jsonify(response)), 202
 
+            response = {'message': 'Please provide all required information'}
+            return make_response(jsonify(response)), 400
+
     @app.route('/auth/login', methods=['POST'])
     def login():
         """
@@ -166,8 +198,9 @@ def create_app(config_name):
         """
         if request.method == "POST":
             email = str(request.data.get('email', ''))
+            password = str(request.data.get('password', ''))
 
-            if email:
+            if email and password:
                 user = User.query.filter_by(email=email).first()
                 # Try to authenticate the found user using their password
                 if user and user.password_is_valid(request.data['password']):
@@ -185,6 +218,9 @@ def create_app(config_name):
                     # User does not exist. Therefore, we return an error message
                     response = {'message': 'Invalid email or password. Please try again'}
                     return make_response(jsonify(response)), 401
+
+            response = {'message': 'Email or password not provided'}
+            return make_response(jsonify(response)), 400
 
     @app.route('/auth/reset', methods=['POST'])
     def reset():
@@ -220,6 +256,9 @@ def create_app(config_name):
                     # User does not exist. Therefore, we return an error message
                     response = {'message': 'Invalid email. Please try again'}
                     return make_response(jsonify(response)), 401
+
+            response = {'message': 'Email not provided'}
+            return make_response(jsonify(response)), 400
 
     @app.route('/auth/password/<token>', methods=['PUT'])
     def password_reset(token):
@@ -257,6 +296,9 @@ def create_app(config_name):
                     }
                     # Return a response notifying the user that they registered successfully
                     return make_response(jsonify(response)), 201
+
+            response = {'message': 'Email or password not provided'}
+            return make_response(jsonify(response)), 400
 
     @app.route('/users', methods=['GET'])
     @token_required
@@ -428,6 +470,9 @@ def create_app(config_name):
 
                 response = {'message': 'That shopping list already exists.'}
                 return make_response(jsonify(response)), 401
+
+            response = {'message': 'Shopping list name not provided.'}
+            return make_response(jsonify(response)), 400
         else:
             # GET
             search_query = request.args.get("q")
@@ -517,21 +562,27 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
         if request.method == 'PUT':
-            name = str(request.data.get('name', ''))
-            description = str(request.data.get('description', ''))
+            name = str(request.data.get('name', '')) if str(request.data.get('name', '')) \
+                else shopping_list.name
+            description = str(request.data.get('description', '')) if \
+                str(request.data.get('description', '')) else shopping_list.description
 
-            if not re.match("^[a-zA-Z0-9 _]*$", name):
-                response = {
-                    'message': 'The list name cannot contain special characters. '
-                               'Only underscores'
-                }
-                return make_response(jsonify(response)), 400
+            if name:
+                if not re.match("^[a-zA-Z0-9 _]*$", name):
+                    response = {
+                        'message': 'The list name cannot contain special characters. '
+                                   'Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
 
-            s_list = ShoppingList.query.\
-                filter(func.lower(ShoppingList.name) == name.lower()).first()
+                s_list = ShoppingList.query.filter_by(user_id=user_id).all()
 
-            # There is no list so we'll try to create it
-            if not s_list:
+                for sl in s_list:
+                    # Check if name exists
+                    if str(list_id) != str(sl.id) and name.lower() == sl.name.lower():
+                        response = {"message": "Shopping list already exists"}
+                        return make_response(jsonify(response)), 401
+
                 # Check if user is owner
                 if shopping_list.user_id == user_id:
 
@@ -551,9 +602,9 @@ def create_app(config_name):
 
                 response = {"message": "You do not have permissions to edit that shopping list"}
                 return make_response(jsonify(response)), 403
-            else:
-                response = {"message": "Shopping list already exists"}
-                return make_response(jsonify(response)), 401
+
+            response = {'message': 'Shopping list name not provided.'}
+            return make_response(jsonify(response)), 400
 
     @app.route('/shopping_lists/<list_id>', methods=['DELETE'])
     @token_required
@@ -595,7 +646,7 @@ def create_app(config_name):
             quantity = str(request.data.get('quantity', ''))
             unit_price = str(request.data.get('unit_price', ''))
 
-            if name:
+            if name and quantity and unit_price:
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
                     response = {
                         'message': 'The item name cannot contain special characters. '
@@ -627,6 +678,9 @@ def create_app(config_name):
 
                 response = {'message': 'That item item already exists.'}
                 return make_response(jsonify(response)), 401
+
+            response = {'message': 'Please provide all the details.'}
+            return make_response(jsonify(response)), 400
         else:
             # GET
             search_query = request.args.get("q")
@@ -722,23 +776,29 @@ def create_app(config_name):
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
         if request.method == 'PUT':
-            name = str(request.data.get('name', ''))
-            quantity = str(request.data.get('quantity', ''))
-            unit_price = str(request.data.get('unit_price', ''))
+            name = str(request.data.get('name', '')) if str(request.data.get('name', '')) \
+                else shopping_list_item.name
+            quantity = str(request.data.get('quantity', '')) if \
+                str(request.data.get('quantity', '')) else shopping_list_item.quantity
+            unit_price = str(request.data.get('unit_price', '')) if \
+                str(request.data.get('unit_price', '')) else shopping_list_item.unit_price
 
-            if not re.match("^[a-zA-Z0-9 _]*$", name):
-                response = {
-                    'message': 'The item name cannot contain special characters. '
-                               'Only underscores'
-                }
-                return make_response(jsonify(response)), 400
+            if name and quantity and unit_price:
+                if not re.match("^[a-zA-Z0-9 _]*$", name):
+                    response = {
+                        'message': 'The item name cannot contain special characters. '
+                                   'Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
 
-            s_list_item = ShoppingListItem.query.\
-                filter(func.lower(ShoppingListItem.name) == name.lower(),
-                       ShoppingListItem.list_id == list_id).first()
+                s_list_item = ShoppingListItem.query.filter_by(list_id=list_id).all()
 
-            # There is no item so we'll try to create it
-            if not s_list_item:
+                for l_item in s_list_item:
+                    # Check if item name exists
+                    if str(item_id) != str(l_item.id) and name.lower() == l_item.name.lower():
+                        response = {"message": "Item already exists"}
+                        return make_response(jsonify(response)), 401
+
                 # Check if item belongs to its owner's list
                 if shopping_list.user_id == user_id:
 
@@ -760,9 +820,9 @@ def create_app(config_name):
 
                 response = {"message": "You do not have permissions to edit that item"}
                 return make_response(jsonify(response)), 403
-            else:
-                response = {"message": "Item already exists"}
-                return make_response(jsonify(response)), 401
+
+            response = {"message": "Please provide all the details"}
+            return make_response(jsonify(response)), 400
 
     @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['DELETE'])
     @token_required
@@ -908,11 +968,13 @@ def create_app(config_name):
         Handles acceptance of friend requests
         """
         try:
-            friend = Friend.query.filter_by(user1=friend_id, user2=user_id).first()
+            int(friend_id)
         except Exception as e:
             # An error occurred, therefore return a string message containing the error
-            response = {'message': str(e)}
+            response = {'message': 'The parameter needs to be an integer'}
             return make_response(jsonify(response)), 401
+
+        friend = Friend.query.filter_by(user1=friend_id, user2=user_id).first()
 
         if request.method == 'PUT':
             if not friend:
@@ -936,14 +998,16 @@ def create_app(config_name):
         Removes a user as a friend
         """
         try:
-            friend = Friend.query. \
-                filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
-                           (and_(Friend.user1 == friend_id, Friend.user2 == user_id))),
-                       Friend.accepted).first()
+            int(friend_id)
         except Exception as e:
             # An error occurred, therefore return a string message containing the error
             response = {'message': str(e)}
             return make_response(jsonify(response)), 401
+
+        friend = Friend.query. \
+            filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
+                       (and_(Friend.user1 == friend_id, Friend.user2 == user_id))),
+                   Friend.accepted).first()
 
         if request.method == 'DELETE':
             if not friend:
@@ -1148,11 +1212,13 @@ def create_app(config_name):
         """
         if request.method == "DELETE":
             try:
-                shopping_list = ShoppingList.query.filter_by(id=list_id).first()
+                int(list_id)
             except Exception:
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'Please ensure the parameter provided is correct'}
                 return make_response(jsonify(response)), 401
+
+            shopping_list = ShoppingList.query.filter_by(id=list_id).first()
 
             if list_id and shopping_list:
                 shared_list = SharedList.query.\
