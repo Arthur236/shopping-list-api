@@ -300,6 +300,8 @@ def create_app(config_name):
             response = {'message': 'Email or password not provided'}
             return make_response(jsonify(response)), 400
 
+    # *********************************** User Operations ***********************************
+
     @app.route('/users', methods=['GET'])
     @token_required
     def get_all_users(user_id):
@@ -366,6 +368,116 @@ def create_app(config_name):
         response = jsonify(users)
         response.status_code = 200
         return response
+
+    @app.route('/users/<u_id>', methods=['GET'])
+    @token_required
+    def get_profile(user_id, u_id):
+        """
+        Loads the user profile
+        """
+        user = User.query.filter_by(id=u_id).first()
+
+        if not user:
+            response = {'message': 'User does not exist'}
+            return make_response(jsonify(response)), 404
+
+        user = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'date_created': user.date_created,
+            'date_modified': user.date_modified
+        }
+        response = jsonify(user)
+        response.status_code = 200
+        return response
+
+    @app.route('/users/<u_id>', methods=['PUT'])
+    @token_required
+    def update_profile(user_id, u_id):
+        """
+        Update user details
+        """
+        if str(user_id) != str(u_id):
+            response = {'message': 'You do not have permission to edit this profile'}
+            return make_response(jsonify(response)), 403
+
+        user = User.query.filter_by(id=user_id).first()
+
+        if request.method == 'PUT':
+            username = str(request.data.get('username', '')) if str(request.data.get('username', '')) \
+                else user.username
+            email = str(request.data.get('email', '')) if \
+                str(request.data.get('email', '')) else user.email
+            password = str(request.data.get('password', '')) if \
+                str(request.data.get('password', '')) else user.password
+
+            if username and email and password:
+                if not re.match("^[a-zA-Z0-9 _]*$", username):
+                    response = {
+                        'message': 'The username cannot contain special characters. '
+                                   'Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                email_resp = validate_email(email)
+                if not email_resp:
+                    response = {'message': 'The email is not valid'}
+                    return make_response(jsonify(response)), 400
+
+                if len(password) < 6:
+                    response = {
+                        'message': 'The password should be at least 6 characters long'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                users = User.query.all()
+
+                for us in users:
+                    # Check if user exists
+                    if str(user.id) != str(us.id) and email.lower() == us.email.lower():
+                        response = {"message": "That user already exists"}
+                        return make_response(jsonify(response)), 401
+
+                # Update user
+                user.username = username
+                user.email = email
+                user.password = Bcrypt().generate_password_hash(password).decode()
+                user.save()
+
+                response = jsonify({
+                    'username': user.username,
+                    'email': user.email,
+                    'date_created': user.date_created,
+                    'date_modified': user.date_modified
+                })
+                response.status_code = 200
+                return response
+
+        response = {'message': 'Please ensure all parameters are correct.'}
+        return make_response(jsonify(response)), 400
+
+    @app.route('/users/<u_id>', methods=['DELETE'])
+    @token_required
+    def delete_profile(user_id, u_id):
+        """
+        Deletes a user profile
+        """
+        if str(user_id) != str(u_id):
+            response = {'message': 'You do not have permission to delete this profile'}
+            return make_response(jsonify(response)), 403
+
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user:
+            response = {'message': 'That user does not exist'}
+            return make_response(jsonify(response)), 404
+
+        if request.method == 'DELETE':
+            user.delete()
+
+            response = {'message': 'Profile deleted successfully'}
+            return make_response(jsonify(response)), 200
 
     # ********************************** Admin Operations ***********************************
 

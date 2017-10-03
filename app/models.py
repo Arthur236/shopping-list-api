@@ -46,6 +46,19 @@ class User(db.Model):
         db.session.add(self)
         db.session.commit()
 
+    def delete(self):
+        """
+        Deletes a user
+        """
+        db.session.delete(self)
+        db.session.commit()
+
+    def __repr__(self):
+        """
+        Return a representation of a user instance
+        """
+        return "<User: {}>".format(self.email)
+
 
 class ShoppingList(db.Model):
     """
