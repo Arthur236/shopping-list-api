@@ -86,6 +86,9 @@ Access the endpoints using your preferred client e.g. Postman
 | /v1/auth/reset                                             | POST    | Generate reset token     | FALSE          |
 | /v1/auth/password/&lt;token&gt;                            | PUT     | Reset password           | TRUE           |
 | /v1/users                                                  | GET     | Get all users            | TRUE           |
+| /v1/users/&lt;user_id&gt;                                  | GET     | Get user profile         | TRUE           |
+| /v1/users/&lt;user_id&gt;                                  | PUT     | Update user profile      | TRUE           |
+| /v1/users/&lt;user_id&gt;                                  | DELETE  | Deactivate account       | TRUE           |
 | /v1/admin/users/&lt;user_id&gt;                            | GET     | Get a specific user      | TRUE           |
 | /v1/admin/users/&lt;user_id&gt;                            | DELETE  | Delete a specific user   | TRUE           |
 | /v1/shopping_lists                                         | POST    | Create shopping list     | TRUE           |
