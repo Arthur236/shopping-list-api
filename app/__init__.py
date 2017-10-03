@@ -391,7 +391,6 @@ def create_app(config_name):
             'id': user.id,
             'username': user.username,
             'email': user.email,
-            'admin': user.admin,
             'date_created': user.date_created,
             'date_modified': user.date_modified
         }
