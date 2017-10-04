@@ -19,9 +19,14 @@ class AuthTestCase(unittest.TestCase):
         # Initialize the test client
         self.client = self.app.test_client
         # This is the user test json data with a predefined username and password
-        self.user_data = {
+        self.user1 = {
             'username': 'User1',
             'email': 'user1@gmail.com',
+            'password': 'password'
+        }
+        self.user2 = {
+            'username': 'User2',
+            'email': 'user2@gmail.com',
             'password': 'password'
         }
 
@@ -53,7 +58,7 @@ class AuthTestCase(unittest.TestCase):
                                        'password': 'pass'})
         self.assertEqual(res.status_code, 400)
 
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         # Get the results returned in json format
         result = json.loads(res.data.decode())
         # Assert that the request contains a success message and a 201 status code
@@ -64,9 +69,9 @@ class AuthTestCase(unittest.TestCase):
         """
         Test that a user cannot be registered twice
         """
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
-        second_res = self.client().post('/v1/auth/register', data=self.user_data)
+        second_res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(second_res.status_code, 202)
 
         # Get the results returned in json format
@@ -78,9 +83,9 @@ class AuthTestCase(unittest.TestCase):
         """
         Test registered user can login
         """
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
-        login_res = self.client().post('/v1/auth/login', data=self.user_data)
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
 
         # Get the results in json format
         result = json.loads(login_res.data.decode())
@@ -116,7 +121,7 @@ class AuthTestCase(unittest.TestCase):
         Test that a registered user can reset their password
         """
         # Register a user
-        self.client().post('/v1/auth/register', data=self.user_data)
+        self.client().post('/v1/auth/register', data=self.user1)
         # Get password reset token
         res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         self.assertEqual(res.status_code, 200)
@@ -161,7 +166,7 @@ class AuthTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
 
         # Get all the users by making a GET request
@@ -179,7 +184,7 @@ class AuthTestCase(unittest.TestCase):
         Test that an admin can get a user by their id
         """
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
 
         login_res = self.client().post('/v1/auth/login', data={
@@ -199,7 +204,7 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 404)
 
         # Try to access without admin rights
-        login_res = self.client().post('/v1/auth/login', data=self.user_data)
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
         res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
@@ -210,11 +215,11 @@ class AuthTestCase(unittest.TestCase):
         Test that an admin can delete a user by their id
         """
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user_data)
+        res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
 
         # Try to access without admin rights
-        login_res = self.client().post('/v1/auth/login', data=self.user_data)
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
         self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
         res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
@@ -239,6 +244,112 @@ class AuthTestCase(unittest.TestCase):
         # Attempt to delete yourself
         res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
+
+    def test_get_profile(self):
+        """
+        Test that a user's profile can be loaded
+        """
+        # Create user by making a POST request
+        res = self.client().post('/v1/auth/register', data=self.user1)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Get the user profile
+        res = self.client().get('/v1/users/2', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+        # Try to get non existing user profile
+        res = self.client().get('/v1/users/26', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+    def test_update_profile(self):
+        """
+        Test that a user can update their profile details
+        """
+        # Create user by making a POST request
+        res = self.client().post('/v1/auth/register', data=self.user1)
+        self.assertEqual(res.status_code, 201)
+        res = self.client().post('/v1/auth/register', data=self.user2)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Try to update another user's profile
+        res = self.client().put('/v1/users/3', headers={'x-access-token': access_token},
+                                data={
+                                    'username': 'test_user',
+                                    'email': 'test_email',
+                                    'password': 'password'
+                                })
+        self.assertEqual(res.status_code, 403)
+
+        # Put special characters in username
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
+                                data={
+                                    'username': 'test_user*-/',
+                                    'email': 'test_email@gmail.com',
+                                    'password': 'password'
+                                })
+        self.assertEqual(res.status_code, 400)
+
+        # Use invalid email
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
+                                data={
+                                    'username': 'test_user',
+                                    'email': 'test_email.com',
+                                    'password': 'password'
+                                })
+        self.assertEqual(res.status_code, 400)
+
+        # Use short password
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
+                                data={
+                                    'username': 'test_user',
+                                    'email': 'test_email@gmail.com',
+                                    'password': 'pass'
+                                })
+        self.assertEqual(res.status_code, 400)
+
+        # Use an email that already exists
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
+                                data=self.user2)
+        self.assertEqual(res.status_code, 401)
+
+        # Use correct details
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
+                                data={
+                                    'username': 'test_user',
+                                    'email': 'test_email@gmail.com',
+                                    'password': 'password'
+                                })
+        self.assertEqual(res.status_code, 200)
+
+    def test_delete_profile(self):
+        """
+        Test that a user can update their profile details
+        """
+        # Create user by making a POST request
+        res = self.client().post('/v1/auth/register', data=self.user1)
+        self.assertEqual(res.status_code, 201)
+        res = self.client().post('/v1/auth/register', data=self.user2)
+        self.assertEqual(res.status_code, 201)
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        self.assertEqual(login_res.status_code, 200)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Try to delete another user's profile
+        res = self.client().put('/v1/users/3', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 403)
+
+        # Use correct credentials
+        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
 
     def tearDown(self):
         """

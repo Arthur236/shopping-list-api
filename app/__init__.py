@@ -469,10 +469,6 @@ def create_app(config_name):
 
         user = User.query.filter_by(id=user_id).first()
 
-        if not user:
-            response = {'message': 'That user does not exist'}
-            return make_response(jsonify(response)), 404
-
         if request.method == 'DELETE':
             user.delete()
 
