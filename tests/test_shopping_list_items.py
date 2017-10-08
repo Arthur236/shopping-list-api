@@ -203,7 +203,7 @@ class ShoppingListTestCase(unittest.TestCase):
         # Delete the shopping list we just created
         res = self.client().delete('/v1/shopping_lists/1/items/{}'.format(results['id']),
                                    headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 201)
+        self.assertEqual(res.status_code, 200)
 
         # Try to delete item that doesnt exist
         res = self.client().delete('/v1/shopping_lists/1/items/563',

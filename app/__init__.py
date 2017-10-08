@@ -962,10 +962,10 @@ def create_app(config_name):
             return make_response(jsonify(response)), 404
 
         if request.method == 'DELETE':
-            if shopping_list_item.user_id == user_id:
+            if shopping_list.user_id == user_id:
                 shopping_list_item.delete()
                 response = {"message": "Item {} deleted successfully".format(shopping_list_item.id)}
-                return make_response(jsonify(response)), 201
+                return make_response(jsonify(response)), 200
 
             response = {"message": "You do not have permissions to delete that item"}
             return make_response(jsonify(response)), 403
