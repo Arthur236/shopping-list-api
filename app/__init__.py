@@ -1169,7 +1169,7 @@ def create_app(config_name):
 
                 for r_fr in result:
                     output = Friend.query. \
-                        filter(and_(Friend.user1 == user_id, Friend.user2 == r_fr.id,
+                        filter(and_(Friend.user1 == r_fr.id, Friend.user2 == user_id,
                                     Friend.accepted == False)).first()
                     if output:
                         search_output.append(output.user2)
@@ -1193,7 +1193,7 @@ def create_app(config_name):
             friends = []
             friend_ids = []
             friend_list = Friend.query. \
-                filter(and_(Friend.user1 == user_id, Friend.accepted == False)).all()
+                filter(and_(Friend.user2 == user_id, Friend.accepted == False)).all()
 
             if not friend_list:
                 response = {'message': 'You have no friend requests'}
@@ -1336,6 +1336,7 @@ def create_app(config_name):
         if request.method == "DELETE":
             try:
                 int(list_id)
+                friend_id = int(request.data.get('friend_id', ''))
             except Exception:
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'Please ensure the parameter provided is correct'}
@@ -1343,9 +1344,14 @@ def create_app(config_name):
 
             shopping_list = ShoppingList.query.filter_by(id=list_id).first()
 
+            if not shopping_list:
+                response = {'message': 'That list does not exist'}
+                return make_response(jsonify(response)), 404
+
             if list_id and shopping_list:
                 shared_list = SharedList.query.\
-                    filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).\
+                    filter(or_(and_(SharedList.user1 == user_id, SharedList.user2 == friend_id)),
+                           and_(SharedList.user1 == friend_id, SharedList.user2 == user_id)).\
                     filter_by(list_id=list_id).first()
 
                 if shared_list:
