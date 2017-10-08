@@ -155,7 +155,7 @@ def create_app(config_name):
                     response = {'message': 'The email is not valid'}
                     return make_response(jsonify(response)), 400
 
-                if not re.match("^[a-zA-Z0-9_]*$", username):
+                if not re.match("^[a-zA-Z0-9 _]*$", username):
                     response = {
                         'message': 'The username cannot contain special characters. '
                                    'Only underscores'
