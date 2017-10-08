@@ -645,6 +645,10 @@ def create_app(config_name):
         # retrieve a shopping list using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
+        if not shopping_list:
+            response = {"message": "That shopping list does not exist"}
+            return make_response(jsonify(response)), 404
+
         if shopping_list.user_id == user_id:
             response = jsonify({
                 'id': shopping_list.id,
@@ -667,6 +671,10 @@ def create_app(config_name):
         """
         # retrieve a shopping list using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
+
+        if not shopping_list:
+            response = {"message": "That shopping list does not exist"}
+            return make_response(jsonify(response)), 404
 
         if request.method == 'PUT':
             name = str(request.data.get('name', '')) if str(request.data.get('name', '')) \
@@ -856,6 +864,10 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
+        if not shopping_list or shopping_list_item:
+            response = {"message": "That shopping list or item does not exist"}
+            return make_response(jsonify(response)), 404
+
         # Check if item belongs to its owner's list
         if shopping_list.user_id == user_id:
             response = jsonify({
@@ -881,6 +893,10 @@ def create_app(config_name):
         # retrieve a shopping list item using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
+
+        if not shopping_list or shopping_list_item:
+            response = {"message": "That shopping list or item does not exist"}
+            return make_response(jsonify(response)), 404
 
         if request.method == 'PUT':
             name = str(request.data.get('name', '')) if str(request.data.get('name', '')) \
@@ -941,8 +957,8 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
-        if not shopping_list_item:
-            response = {"message": "That item doesn't exist"}
+        if not shopping_list or shopping_list_item:
+            response = {"message": "That shopping list or item does not exist"}
             return make_response(jsonify(response)), 404
 
         if request.method == 'DELETE':
