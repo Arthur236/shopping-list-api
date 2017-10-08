@@ -864,7 +864,7 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
-        if not shopping_list or shopping_list_item:
+        if not shopping_list or not shopping_list_item:
             response = {"message": "That shopping list or item does not exist"}
             return make_response(jsonify(response)), 404
 
@@ -894,7 +894,7 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
-        if not shopping_list or shopping_list_item:
+        if not shopping_list or not shopping_list_item:
             response = {"message": "That shopping list or item does not exist"}
             return make_response(jsonify(response)), 404
 
@@ -957,7 +957,7 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
-        if not shopping_list or shopping_list_item:
+        if not shopping_list or not shopping_list_item:
             response = {"message": "That shopping list or item does not exist"}
             return make_response(jsonify(response)), 404
 
