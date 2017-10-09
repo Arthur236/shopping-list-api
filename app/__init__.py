@@ -1350,8 +1350,8 @@ def create_app(config_name):
 
             if list_id and shopping_list:
                 shared_list = SharedList.query.\
-                    filter(or_(and_(SharedList.user1 == user_id, SharedList.user2 == friend_id)),
-                           and_(SharedList.user1 == friend_id, SharedList.user2 == user_id)).\
+                    filter(or_(and_(SharedList.user1 == user_id, SharedList.user2 == friend_id),
+                           and_(SharedList.user1 == friend_id, SharedList.user2 == user_id))).\
                     filter_by(list_id=list_id).first()
 
                 if shared_list:

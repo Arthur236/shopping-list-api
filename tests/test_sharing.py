@@ -211,17 +211,20 @@ class ShareTestCase(unittest.TestCase):
 
         # Stop sharing
         res = self.client().delete('/v1/shopping_lists/share/1',
-                                   headers={'x-access-token': access_token})
+                                   headers={'x-access-token': access_token}, 
+                                   data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
         # Try to remove a list that's not shared
         res = self.client().delete('/v1/shopping_lists/share/1',
-                                   headers={'x-access-token': access_token})
+                                   headers={'x-access-token': access_token}, 
+                                   data={'friend_id': 3})
         self.assertEqual(res.status_code, 404)
 
         # Use the wrong list id formats
         res = self.client().delete('/v1/shopping_lists/share/one',
-                                   headers={'x-access-token': access_token})
+                                   headers={'x-access-token': access_token},
+                                   data={'friend_id': 3})
         self.assertEqual(res.status_code, 401)
 
     def tearDown(self):
