@@ -130,6 +130,7 @@ def create_app(config_name):
         """
         if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
             return True
+            
         return False
 
     @app.route('/', methods=['GET'])

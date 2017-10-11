@@ -54,6 +54,25 @@ class ShoppingListTestCase(unittest.TestCase):
 
         return access_token
 
+    def test_token_correct(self):
+        """
+        Test if token is correct format
+        """
+        res = self.client().post(
+            '/v1/shopping_lists',
+            headers={'x-access-token': 'some_incorrect_token'},
+            data=self.shopping_list)
+        self.assertEqual(res.status_code, 401)
+
+    def test_token_present(self):
+        """
+        Test if token is present
+        """
+        res = self.client().post(
+            '/v1/shopping_lists',
+            data=self.shopping_list)
+        self.assertEqual(res.status_code, 401)
+
     def test_shopping_list_creation(self):
         """
         Test API can create a shopping list (POST request)

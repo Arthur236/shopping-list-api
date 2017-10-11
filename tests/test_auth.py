@@ -36,6 +36,31 @@ class AuthTestCase(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
+    def test_nonesistent_url(self):
+        """
+        Try to access url that doesnt exist
+        """
+        res = self.client().get('/v1/auth/register/hei')
+        self.assertEqual(res.status_code, 404)
+
+    def test_username_is_valid(self):
+        """
+        Test username cannot have special characters
+        """
+        res = self.client().post('/v1/auth/register',
+                                 data={'username': 'test*/-', 'email': 'test@gmail.com',
+                                       'password': 'password'})
+        self.assertEqual(res.status_code, 400)
+
+    def test_password_length(self):
+        """
+        Test password length
+        """
+        res = self.client().post('/v1/auth/register',
+                                 data={'username': 'test', 'email': 'test@gmail.com',
+                                       'password': 'pass'})
+        self.assertEqual(res.status_code, 400)
+
     def test_registration(self):
         """
         Test user registration works correctly
@@ -46,23 +71,9 @@ class AuthTestCase(unittest.TestCase):
                                        'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
-        # Test username cannot have special characters
-        res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test*/-', 'email': 'test@gmail.com',
-                                       'password': 'password'})
-        self.assertEqual(res.status_code, 400)
-
-        # Test password length
-        res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test', 'email': 'test@gmail.com',
-                                       'password': 'pass'})
-        self.assertEqual(res.status_code, 400)
-
         res = self.client().post('/v1/auth/register', data=self.user1)
         # Get the results returned in json format
         result = json.loads(res.data.decode())
-        # Assert that the request contains a success message and a 201 status code
-        self.assertEqual(result['message'], "You were registered successfully. Please log in.")
         self.assertEqual(res.status_code, 201)
 
     def test_already_registered_user(self):
@@ -74,10 +85,12 @@ class AuthTestCase(unittest.TestCase):
         second_res = self.client().post('/v1/auth/register', data=self.user1)
         self.assertEqual(second_res.status_code, 202)
 
-        # Get the results returned in json format
-        result = json.loads(second_res.data.decode())
-        self.assertEqual(
-            result['message'], "User already exists. Please login.")
+    def test_register_parameters(self):
+        """
+        Test if all parameters are provided
+        """
+        res = self.client().post('/v1/auth/register')
+        self.assertEqual(res.status_code, 400)
 
     def test_user_login(self):
         """
@@ -89,11 +102,31 @@ class AuthTestCase(unittest.TestCase):
 
         # Get the results in json format
         result = json.loads(login_res.data.decode())
-        # Test that the response contains success message
-        self.assertEqual(result['message'], "You logged in successfully.")
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
         self.assertTrue(result['access-token'])
+
+    def test_login_parameters(self):
+        """
+        Test if all login parameters are provided
+        """
+        res = self.client().post('/v1/auth/register', data=self.user1)
+        self.assertEqual(res.status_code, 201)
+        login_res = self.client().post('/v1/auth/login')
+        self.assertEqual(login_res.status_code, 400)
+
+    def test_wrong_password(self):
+        """
+        Test whether a registered user can login with wrong password
+        """
+        res = self.client().post('/v1/auth/register', data=self.user1)
+        self.assertEqual(res.status_code, 201)
+        login_res = self.client().post('/v1/auth/login', 
+                                       data={'email': 'user1@gmail.com',
+                                       'password': 'passwordssss'})
+
+        # Assert that the status code
+        self.assertEqual(login_res.status_code, 401)
 
     def test_non_registered_user_login(self):
         """
@@ -113,8 +146,6 @@ class AuthTestCase(unittest.TestCase):
         # Assert that this response must contain an error message
         # and an error status code 401(Unauthorized)
         self.assertEqual(res.status_code, 401)
-        self.assertEqual(
-            result['message'], "Invalid email or password. Please try again")
 
     def test_password_reset(self):
         """
@@ -122,6 +153,15 @@ class AuthTestCase(unittest.TestCase):
         """
         # Register a user
         self.client().post('/v1/auth/register', data=self.user1)
+
+        # Use invalid email
+        res = self.client().post('/v1/auth/reset', data={'email': 'jwhe89@gmail.com'})
+        self.assertEqual(res.status_code, 401)
+
+        # Exclude email parameter
+        res = self.client().post('/v1/auth/reset')
+        self.assertEqual(res.status_code, 400)
+
         # Get password reset token
         res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         self.assertEqual(res.status_code, 200)
@@ -148,8 +188,6 @@ class AuthTestCase(unittest.TestCase):
 
         # Get the results in json format
         result = json.loads(login_res.data.decode())
-        # Test that the response contains success message
-        self.assertEqual(result['message'], "You logged in successfully.")
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
         self.assertTrue(result['access-token'])
@@ -172,7 +210,6 @@ class AuthTestCase(unittest.TestCase):
         # Get all the users by making a GET request
         res = self.client().get('/v1/users', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
-        self.assertIn('user1', str(res.data))
 
         # Use the wrong limit and page data formats
         res = self.client().get('/v1/users?page=one&limit=two',
