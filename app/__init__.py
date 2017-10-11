@@ -332,9 +332,7 @@ def create_app(config_name):
                     continue
                 else:
                     obj = {
-                        'id': user.id,
                         'username': user.username,
-                        'email': user.email,
                         'date_created': user.date_created,
                         'date_modified': user.date_modified
                     }
@@ -345,8 +343,9 @@ def create_app(config_name):
             return response
 
         users = []
-        paginated_users = User.query.filter_by(admin=False).\
-            order_by(User.username.asc()).paginate(page, limit)
+        paginated_users = User.query.filter(User.id != user_id).\
+        filter_by(admin=False).\
+        order_by(User.username.asc()).paginate(page, limit)
 
         if not paginated_users:
             response = {'message': 'No users were found'}
@@ -357,9 +356,7 @@ def create_app(config_name):
                 continue
             else:
                 obj = {
-                    'id': user.id,
                     'username': user.username,
-                    'email': user.email,
                     'date_created': user.date_created,
                     'date_modified': user.date_modified
                 }
