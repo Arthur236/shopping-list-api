@@ -130,7 +130,7 @@ def create_app(config_name):
         """
         if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
             return True
-            
+
         return False
 
     @app.route('/', methods=['GET'])
@@ -321,7 +321,8 @@ def create_app(config_name):
         if search_query:
             # if parameter q is specified
             result = User.query.\
-                filter(and_(User.username.ilike('%' + search_query + '%')), User.admin == False)
+                filter(User.username.ilike('%' + search_query + '%')).\
+                filter_by(admin=False)
             output = []
 
             if not result:

@@ -29,6 +29,10 @@ class AuthTestCase(unittest.TestCase):
             'email': 'user2@gmail.com',
             'password': 'password'
         }
+        self.admin = {
+            'email': 'admin@gmail.com',
+            'password': 'admin123'
+        }
 
         with self.app.app_context():
             # Create all tables
@@ -61,29 +65,36 @@ class AuthTestCase(unittest.TestCase):
                                        'password': 'pass'})
         self.assertEqual(res.status_code, 400)
 
-    def test_registration(self):
+    def test_email_is_valid(self):
         """
-        Test user registration works correctly
+        Test email is correct format
         """
-        # Test email is correct format
         res = self.client().post('/v1/auth/register',
                                  data={'username': 'test', 'email': 'test.com',
                                        'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
+    def test_registration(self):
+        """
+        Test user registration works correctly
+        """
         res = self.client().post('/v1/auth/register', data=self.user1)
         # Get the results returned in json format
         result = json.loads(res.data.decode())
         self.assertEqual(res.status_code, 201)
 
+    def create_user(self):
+        res = self.client().post('/v1/auth/register', data=self.user1)
+
+        return res
+
     def test_already_registered_user(self):
         """
         Test that a user cannot be registered twice
         """
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
-        second_res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(second_res.status_code, 202)
+        self.create_user()
+        res = self.create_user()
+        self.assertEqual(res.status_code, 202)
 
     def test_register_parameters(self):
         """
@@ -96,8 +107,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Test registered user can login
         """
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
         login_res = self.client().post('/v1/auth/login', data=self.user1)
 
         # Get the results in json format
@@ -110,8 +120,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Test if all login parameters are provided
         """
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
         login_res = self.client().post('/v1/auth/login')
         self.assertEqual(login_res.status_code, 400)
 
@@ -119,8 +128,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Test whether a registered user can login with wrong password
         """
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
         login_res = self.client().post('/v1/auth/login', 
                                        data={'email': 'user1@gmail.com',
                                        'password': 'passwordssss'})
@@ -147,40 +155,49 @@ class AuthTestCase(unittest.TestCase):
         # and an error status code 401(Unauthorized)
         self.assertEqual(res.status_code, 401)
 
-    def test_password_reset(self):
+    def test_password_reset_email(self):
         """
-        Test that a registered user can reset their password
+        Use invalid email
         """
-        # Register a user
-        self.client().post('/v1/auth/register', data=self.user1)
+        self.create_user()
 
-        # Use invalid email
         res = self.client().post('/v1/auth/reset', data={'email': 'jwhe89@gmail.com'})
         self.assertEqual(res.status_code, 401)
 
-        # Exclude email parameter
+    def test_password_reset_email_parameter(self):
+        """
+        Exclude email parameter
+        """
+        self.create_user()
+
         res = self.client().post('/v1/auth/reset')
         self.assertEqual(res.status_code, 400)
+
+    def test_password_reset_token(self):
+        """
+        Test that a registered user can get password reset token
+        """
+        # Register a user
+        self.create_user()
 
         # Get password reset token
         res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         self.assertEqual(res.status_code, 200)
         token = json.loads(res.data.decode())
 
-        # Attempt to reset their password
+    def test_password_reset(self):
+        """
+        Attempt to reset their password
+        """
+        self.create_user()
+
+        # Get password reset token
+        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        token = json.loads(res.data.decode())
+
         reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'],
                                       data={'password': 'pass123'})
         self.assertEqual(reset_res.status_code, 201)
-
-        # Attempt to use wrong token
-        reset_res = self.client().put('/v1/auth/password/wrong_token',
-                                      data={'password': 'pass123'})
-        self.assertEqual(reset_res.status_code, 400)
-
-        # Attempt to reset using short password
-        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'],
-                                      data={'password': 'pass'})
-        self.assertEqual(reset_res.status_code, 400)
 
         # Ensure you can log in with changed password
         login_res = self.client().post('/v1/auth/login',
@@ -192,93 +209,164 @@ class AuthTestCase(unittest.TestCase):
         self.assertEqual(login_res.status_code, 200)
         self.assertTrue(result['access-token'])
 
+    def test_wrong_pass_reset_token(self):
+        """
+        Attempt to use wrong token
+        """
+        self.create_user()
+
+        reset_res = self.client().put('/v1/auth/password/wrong_token',
+                                      data={'password': 'pass123'})
+        self.assertEqual(reset_res.status_code, 400)
+
+    def test_short_reset_password(self):
+        """
+        Attempt to reset using short password
+        """
+        self.create_user()
+
+        # Get password reset token
+        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        token = json.loads(res.data.decode())
+
+        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'],
+                                      data={'password': 'pass'})
+        self.assertEqual(reset_res.status_code, 400)
+
+    def test_reset_params(self):
+        """
+        Attempt to reset using no parameters
+        """
+        self.create_user()
+
+        # Get password reset token
+        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        token = json.loads(res.data.decode())
+
+        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'])
+        self.assertEqual(reset_res.status_code, 400)
+
     def test_get_users(self):
         """
         Test that an admin can get all users
         """
-        login_res = self.client().post('/v1/auth/login', data={
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(login_res.status_code, 200)
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
         # Get all the users by making a GET request
         res = self.client().get('/v1/users', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Use the wrong limit and page data formats
+    def test_get_pagination_limits(self):
+        """
+        Use the wrong limit and page data formats
+        """
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().get('/v1/users?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
+
+    def test_get_paginated_users(self):
+        """
+        Get paginated users
+        """
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        res = self.client().get('/v1/users?page=1&limit=2',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
 
     def test_get_user_by_id(self):
         """
         Test that an admin can get a user by their id
         """
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
-        login_res = self.client().post('/v1/auth/login', data={
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(login_res.status_code, 200)
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
         access_token = json.loads(login_res.data.decode())['access-token']
 
-        # Get all the users by making a GET request
+        # Get specific user
         res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
-        self.assertIn('user1', str(res.data))
 
-        # Try to get non existing user
+    def test_get_non_existent_user(self):
+        """
+        Try to get non existing user
+        """
+        # Create user by making a POST request
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+        
         res = self.client().get('/v1/admin/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-        # Try to access without admin rights
+    def test_get_user_admin_rights(self):
+        """
+        Try to access without admin rights
+        """
+        self.create_user()
+
         login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
-    def test_delete_user(self):
+    def test_delete_user_without_admin(self):
         """
-        Test that an admin can delete a user by their id
+        Try to access without admin rights
         """
-        # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
-        # Try to access without admin rights
         login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
-        login_res = self.client().post('/v1/auth/login', data={
-            'email': 'admin@gmail.com',
-            'password': 'admin123'
-        })
-        self.assertEqual(login_res.status_code, 200)
+    def test_delete_user_as_admin(self):
+        """
+        Try to access with admin rights
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Attempt to delete a user
         res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Attempt to delete a non existent user
+    def test_delete_non_existent_user(self):
+        """
+        Attempt to delete a non existent user
+        """
+        self.create_user()
+
+        # Try to access without admin rights
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().delete('/v1/admin/users/298',
                                    headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-        # Attempt to delete yourself
+    def test_admin_delete_themselves(self):
+        """
+        Attempt to delete yourself
+        """
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
@@ -381,11 +469,11 @@ class AuthTestCase(unittest.TestCase):
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Try to delete another user's profile
-        res = self.client().put('/v1/users/3', headers={'x-access-token': access_token})
+        res = self.client().delete('/v1/users/3', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
         # Use correct credentials
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token})
+        res = self.client().delete('/v1/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
     def tearDown(self):
