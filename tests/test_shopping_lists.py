@@ -112,6 +112,9 @@ class ShoppingListTestCase(unittest.TestCase):
         self.assertIn('Groceries', str(res.data))
 
     def create_shopping_list(self):
+        """
+        Helper function to create shopping list
+        """
         access_token = self.setup_users()
 
         results = self.client().post('/v1/shopping_lists', 
@@ -296,24 +299,6 @@ class ShoppingListTestCase(unittest.TestCase):
             '/v1/shopping_lists/23',
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
-
-    # def test_list_deletion_of_non_owner(self):
-    #     """
-    #     Try to delete shoipping list thats not yours
-    #     """
-    #     access_token = self.setup_users()
-
-    #     rv = self.create_shopping_list()
-    #     # Get the shopping list in json
-    #     results = json.loads(rv.data.decode())
-
-    #     login_res = self.client().post('/v1/auth/login', data=self.user2)
-    #     access_token = json.loads(login_res.data.decode())['access-token']
-
-    #     # Delete the shopping list belonging to another user
-    #     res = self.client().delete('/v1/shopping_lists/{}'.format(results['id']), 
-    #                                headers={'x-access-token': access_token})
-    #     self.assertEqual(res.status_code, 403)
 
     def tearDown(self):
         """
