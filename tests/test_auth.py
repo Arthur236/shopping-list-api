@@ -85,6 +85,7 @@ class AuthTestCase(unittest.TestCase):
 
     def create_user(self):
         res = self.client().post('/v1/auth/register', data=self.user1)
+        self.client().post('/v1/auth/register', data=self.user2)
 
         return res
 
@@ -375,33 +376,35 @@ class AuthTestCase(unittest.TestCase):
         Test that a user's profile can be loaded
         """
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
         login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Get the user profile
         res = self.client().get('/v1/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Try to get non existing user profile
+    def test_non_existent_user_profile(self):
+        """
+        Try to get non existing user profile
+        """
+        self.create_user()
+        
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().get('/v1/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-    def test_update_profile(self):
+    def test_update_another_users_profile(self):
         """
         Test that a user can update their profile details
         """
         # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
-        res = self.client().post('/v1/auth/register', data=self.user2)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
         login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         # Try to update another user's profile
@@ -413,7 +416,15 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 403)
 
-        # Put special characters in username
+    def test_spceial_chars_profile_update(self):
+        """
+        Put special characters in username
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
                                 data={
                                     'username': 'test_user*-/',
@@ -422,7 +433,15 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 400)
 
-        # Use invalid email
+    def test_spceial_invalid_email_profile_update(self):
+        """
+        Use invalid email
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
                                 data={
                                     'username': 'test_user',
@@ -431,7 +450,15 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 400)
 
-        # Use short password
+    def test_short_pass_profile_update(self):
+        """
+        Use short password
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
                                 data={
                                     'username': 'test_user',
@@ -440,12 +467,28 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 400)
 
-        # Use an email that already exists
+    def test_email_exists_update_profile(self):
+        """
+        Use an email that already exists
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
                                 data=self.user2)
         self.assertEqual(res.status_code, 401)
 
-        # Use correct details
+    def test_update_profile(self):
+        """
+        Use correct details
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
                                 data={
                                     'username': 'test_user',
@@ -454,25 +497,27 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 200)
 
-    def test_delete_profile(self):
+    def test_delete_another_user_profile(self):
         """
-        Test that a user can update their profile details
+        Try to delete another user's profile
         """
-        # Create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
-        res = self.client().post('/v1/auth/register', data=self.user2)
-        self.assertEqual(res.status_code, 201)
+        self.create_user()
 
         login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
         access_token = json.loads(login_res.data.decode())['access-token']
 
-        # Try to delete another user's profile
         res = self.client().delete('/v1/users/3', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
-        # Use correct credentials
+    def test_delete_profile(self):
+        """
+        Use correct credentials
+        """
+        self.create_user()
+
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
         res = self.client().delete('/v1/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
