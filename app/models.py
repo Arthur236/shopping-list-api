@@ -119,8 +119,8 @@ class ShoppingListItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     list_id = db.Column(db.Integer, db.ForeignKey(ShoppingList.id))
     name = db.Column(db.String(255))
-    quantity = db.Column(db.Integer)
-    unit_price = db.Column(db.Integer)
+    quantity = db.Column(db.Float)
+    unit_price = db.Column(db.Float)
     date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
     date_modified = db.Column(db.DateTime, default=db.func.current_timestamp(),
                               onupdate=db.func.current_timestamp())
