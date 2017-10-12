@@ -258,7 +258,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user()
 
         # Get all the users by making a GET request
-        res = self.client().get('/v1/users', headers={'x-access-token': access_token})
+        res = self.client().get('/v1/admin/users', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
     def test_get_pagination_limits(self):
@@ -268,7 +268,7 @@ class AuthTestCase(unittest.TestCase):
         login_res = self.client().post('/v1/auth/login', data=self.admin)
         access_token = json.loads(login_res.data.decode())['access-token']
 
-        res = self.client().get('/v1/users?page=one&limit=two',
+        res = self.client().get('/v1/admin/users?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
@@ -279,7 +279,7 @@ class AuthTestCase(unittest.TestCase):
         login_res = self.client().post('/v1/auth/login', data=self.admin)
         access_token = json.loads(login_res.data.decode())['access-token']
 
-        res = self.client().get('/v1/users?page=1&limit=2',
+        res = self.client().get('/v1/admin/users?page=1&limit=2',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 

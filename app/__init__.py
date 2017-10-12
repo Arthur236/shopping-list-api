@@ -305,18 +305,11 @@ def create_app(config_name):
 
     @app.route('/users', methods=['GET'])
     @token_required
-    def get_all_users(user_id):
+    def search_user(user_id):
         """
         Retrieves all registered users
         """
         search_query = request.args.get("q")
-        try:
-            limit = int(request.args.get('limit', 10))
-            page = int(request.args.get('page', 1))
-        except ValueError:
-            # An error occurred, therefore return a string message containing the error
-            response = {'message': 'The parameter provided should be an integer'}
-            return make_response(jsonify(response)), 401
 
         if search_query:
             # if parameter q is specified
@@ -326,7 +319,7 @@ def create_app(config_name):
             output = []
 
             if not result:
-                response = {'message': 'No users were found'}
+                response = {'message': 'No users matching the criteria were found'}
                 return make_response(jsonify(response)), 404
 
             for user in result:
@@ -343,30 +336,6 @@ def create_app(config_name):
             response = jsonify(output)
             response.status_code = 200
             return response
-
-        users = []
-        paginated_users = User.query.filter(User.id != user_id).\
-        filter_by(admin=False).\
-        order_by(User.username.asc()).paginate(page, limit)
-
-        if not paginated_users:
-            response = {'message': 'No users were found'}
-            return make_response(jsonify(response)), 404
-
-        for user in paginated_users.items:
-            if user.id == user_id:
-                continue
-            else:
-                obj = {
-                    'username': user.username,
-                    'date_created': user.date_created,
-                    'date_modified': user.date_modified
-                }
-                users.append(obj)
-
-        response = jsonify(users)
-        response.status_code = 200
-        return response
 
     @app.route('/users/<u_id>', methods=['GET'])
     @token_required
@@ -473,6 +442,81 @@ def create_app(config_name):
             return make_response(jsonify(response)), 200
 
     # ********************************** Admin Operations ***********************************
+
+    @app.route('/admin/users', methods=['GET'])
+    @token_required
+    def get_all_users(user_id):
+        """
+        Retrieves all registered users
+        """
+        user = User.query.filter_by(id=user_id).first()
+
+        if not user.admin:
+            response = {'message': 'Cannot perform that operation without admin rights'}
+            return make_response(jsonify(response)), 403
+
+        search_query = request.args.get("q")
+        try:
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
+        if search_query:
+            # if parameter q is specified
+            result = User.query.\
+                filter(User.username.ilike('%' + search_query + '%')).\
+                filter_by(admin=False)
+            output = []
+
+            if not result:
+                response = {'message': 'No users were found'}
+                return make_response(jsonify(response)), 404
+
+            for user in result:
+                if user.id == user_id:
+                    continue
+                else:
+                    obj = {
+                        'id': user.id,
+                        'username': user.username,
+                        'email': user.email,
+                        'date_created': user.date_created,
+                        'date_modified': user.date_modified
+                    }
+                    output.append(obj)
+
+            response = jsonify(output)
+            response.status_code = 200
+            return response
+
+        users = []
+        paginated_users = User.query.filter(User.id != user_id).\
+        filter_by(admin=False).\
+        order_by(User.username.asc()).paginate(page, limit)
+
+        if not paginated_users:
+            response = {'message': 'No users were found'}
+            return make_response(jsonify(response)), 404
+
+        for user in paginated_users.items:
+            if user.id == user_id:
+                continue
+            else:
+                obj = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'date_created': user.date_created,
+                    'date_modified': user.date_modified
+                }
+                users.append(obj)
+
+        response = jsonify(users)
+        response.status_code = 200
+        return response
 
     @app.route('/admin/users/<u_id>', methods=['GET'])
     @token_required
