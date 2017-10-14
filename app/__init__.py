@@ -788,6 +788,17 @@ def create_app(config_name):
             unit_price = str(request.data.get('unit_price', ''))
 
             if name and quantity and unit_price:
+                shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
+
+                if not shopping_list:
+                    response = {"message": "That shopping list does not exist"}
+                    return make_response(jsonify(response)), 404
+
+                # Check if list belongs to logged in user
+                if shopping_list.user_id != user_id:
+                    response = {"message": "You don't have permissions to add items to that list"}
+                    return make_response(jsonify(response)), 403
+
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
                     response = {
                         'message': 'The item name cannot contain special characters. '
@@ -886,7 +897,7 @@ def create_app(config_name):
         """
         Retrieves a specific item
         """
-        # retrieve a shopping list item using it's id
+        # Retrieve a shopping list item using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
