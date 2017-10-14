@@ -26,7 +26,7 @@ class TestingConfig(Config):
     Testing configurations, with a separate test database
     """
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/shopping_list_api_test'
+    SQLALCHEMY_DATABASE_URI = os.getenv('TEST_DATABASE_URL')
     DEBUG = True
 
 
