@@ -9,6 +9,7 @@ A simple api to a shopping list application
 * Creation of users
 * Creation of shopping lists
 * Addition of items to a shopping list
+* Ability to share lists with friends
 
 ## Documentation
 
