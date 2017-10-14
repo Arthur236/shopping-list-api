@@ -347,6 +347,7 @@ class AuthTestCase(unittest.TestCase):
         Use an email that already exists
         """
         self.create_user(self.user1)
+        self.create_user(self.user2)
         access_token = self.login_user(self.user1)
 
         res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},

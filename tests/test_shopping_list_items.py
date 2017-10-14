@@ -140,8 +140,8 @@ class ShoppingListTestCase(unittest.TestCase):
                                  headers={'x-access-token': access_token},
                                  data={
                                      'name': 'Test',
-                                     'quantity': '100',
-                                     'unit_price': '2.5'
+                                     'quantity': 'one',
+                                     'unit_price': '250.5'
                                  })
         self.assertEqual(res.status_code, 401)
 

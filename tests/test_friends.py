@@ -144,7 +144,7 @@ class FriendTestCase(unittest.TestCase):
                           headers={'x-access-token': access_token})
         res = self.client().put('/v1/friends/2',
                                 headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 401)
+        self.assertEqual(res.status_code, 403)
 
     def test_friend_id_accept_param(self):
         """
@@ -166,17 +166,18 @@ class FriendTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-    def test_accept_request_twice(self):
+    def test_to_send_request_to_friend(self):
         """
-        Try to accept friend request twice
+        Try to send a friend request to a user you're friends with
         """
         access_token = self.send_user2_request()
 
         self.client().put('/v1/friends/2', 
                           headers={'x-access-token': access_token})
-        res = self.client().put('/v1/friends/2',
-                                headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 403)
+        res = self.client().post('/v1/friends',
+                                 headers={'x-access-token': access_token},
+                                 data={'friend_id': 2})
+        self.assertEqual(res.status_code, 401)
 
     def test_befriend_user_twice(self):
         """
@@ -293,6 +294,56 @@ class FriendTestCase(unittest.TestCase):
         res = self.client().delete('/v1/friends/2',
                                    headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
+
+    def test_requests_pagination_params_format(self):
+        """
+        Test if page and limit params are correct format
+        """
+        access_token = self.send_user2_request()
+
+        res = self.client().get('/v1/friends/requests?page=one&limit=two',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
+    def test_search_non_existent_request(self):
+        """
+        Look for a friend request that doesnt exist
+        """
+        access_token = self.send_user2_request()
+
+        res = self.client().get('/v1/friends/requests?q=hrhre',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+    def test_search_existent_request(self):
+        """
+        Look for a friend request that exists
+        """
+        access_token = self.send_user2_request()
+
+        res = self.client().get('/v1/friends/requests?q=us',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+    def test_get_friend_requests_when_none(self):
+        """
+        Try to get friend requests when you have none
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/friends/requests',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+    def test_get_friend_requests(self):
+        """
+        Try to get friend requests when you have some
+        """
+        access_token = self.send_user2_request()
+
+        res = self.client().get('/v1/friends/requests',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
 
     def tearDown(self):
         """

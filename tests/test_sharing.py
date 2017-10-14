@@ -32,6 +32,10 @@ class ShareTestCase(unittest.TestCase):
             'name': 'Test shopping list',
             'description': 'Test description'
         }
+        self.shopping_list2 = {
+            'name': 'List 2',
+            'description': 'Test description'
+        }
         self.shopping_list_item = \
             {'list_id': 1, 'name': 'Tomatoes', 'quantity': 20, 'unit_price': 5}
         self.shopping_list_item2 = \
@@ -52,6 +56,8 @@ class ShareTestCase(unittest.TestCase):
             access_token = json.loads(login_res.data.decode())['access-token']
             self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token}, 
                                data=self.shopping_list)
+            self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+                               data=self.shopping_list2)
 
             self.client().post('/v1/shopping_lists/1/items', 
                                headers={'x-access-token': access_token},
@@ -201,6 +207,30 @@ class ShareTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_get_shared_list_items_id_format(self):
+        """
+        Test whether shared list id format is correct
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
+        # Get list items
+        res = self.client().get('/v1/shopping_lists/share/one/items',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
+    def test_list_is_shared(self):
+        """
+        Test if the list has been shared to the user before viewing items
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
+        # Get list items
+        res = self.client().get('/v1/shopping_lists/share/2/items',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 403)
+
     def test_get_shared_list_pagination_params(self):
         """
         Use the wrong limit and page data formats
@@ -211,6 +241,28 @@ class ShareTestCase(unittest.TestCase):
         res = self.client().get('/v1/shopping_lists/share/1/items?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
+
+    def test_search_non_existent_shared_list_items(self):
+        """
+        Search items that are not in list
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/shopping_lists/share/1/items?q=jfdre',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+    def test_search_existent_shared_list_items(self):
+        """
+        Search items that are in list
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/shopping_lists/share/1/items?q=tom',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
 
     def test_stop_sharing_list(self):
         """
@@ -232,6 +284,17 @@ class ShareTestCase(unittest.TestCase):
 
         res = self.client().delete('/v1/shopping_lists/share/1',
                                    headers={'x-access-token': access_token}, 
+                                   data={'friend_id': 3})
+        self.assertEqual(res.status_code, 404)
+
+    def test_stop_list_exists(self):
+        """
+        Test if the shopping list trying to be unshared exists
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().delete('/v1/shopping_lists/share/563',
+                                   headers={'x-access-token': access_token},
                                    data={'friend_id': 3})
         self.assertEqual(res.status_code, 404)
 

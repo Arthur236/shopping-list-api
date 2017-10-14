@@ -1110,8 +1110,8 @@ def create_app(config_name):
 
             if friend_id:
                 friend = Friend.query.\
-                    filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
-                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id)))).first()
+                    filter(or_(and_(Friend.user1 == user_id, Friend.user2 == friend_id),
+                               and_(Friend.user1 == friend_id, Friend.user2 == user_id))).first()
 
                 if not friend:
                     # The users are not friends
@@ -1478,6 +1478,13 @@ def create_app(config_name):
         """
         Retrieves all items in shared shopping list
         """
+        try:
+            int(list_id)
+        except Exception:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'Please ensure the parameter provided is an integer'}
+            return make_response(jsonify(response)), 401
+
         if request.method == "GET":
             # Ensure that the list has been shared to that user
             check_shared = SharedList.query.\
@@ -1526,7 +1533,7 @@ def create_app(config_name):
                 order_by(ShoppingListItem.name.asc()).paginate(page, limit)
             results = []
 
-            if not paginated_items:
+            if not paginated_items.items:
                 response = {'message': 'The list has no items'}
                 return make_response(jsonify(response)), 404
 
