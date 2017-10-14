@@ -315,7 +315,7 @@ def create_app(config_name):
             # if parameter q is specified
             result = User.query.\
                 filter(User.username.ilike('%' + search_query + '%')).\
-                filter_by(admin=False)
+                filter_by(admin=False).all()
             output = []
 
             if not result:
@@ -420,9 +420,6 @@ def create_app(config_name):
                 response.status_code = 200
                 return response
 
-        response = {'message': 'Please ensure all parameters are correct.'}
-        return make_response(jsonify(response)), 400
-
     @app.route('/users/<u_id>', methods=['DELETE'])
     @token_required
     def delete_profile(user_id, u_id):
@@ -468,11 +465,11 @@ def create_app(config_name):
             # if parameter q is specified
             result = User.query.\
                 filter(User.username.ilike('%' + search_query + '%')).\
-                filter_by(admin=False)
+                filter_by(admin=False).all()
             output = []
 
             if not result:
-                response = {'message': 'No users were found'}
+                response = {'message': 'No users matching the criteria were found'}
                 return make_response(jsonify(response)), 404
 
             for user in result:
