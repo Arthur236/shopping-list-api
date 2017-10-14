@@ -782,18 +782,18 @@ def create_app(config_name):
         GET - Retrieves all items belonging to a specific shopping list
         POST - Creates a shopping list item
         """
+        shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
+
+        if not shopping_list:
+            response = {"message": "That shopping list in not yours or does not exist"}
+            return make_response(jsonify(response)), 404
+
         if request.method == "POST":
             name = str(request.data.get('name', ''))
             quantity = str(request.data.get('quantity', ''))
             unit_price = str(request.data.get('unit_price', ''))
 
             if name and quantity and unit_price:
-                shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
-
-                if not shopping_list:
-                    response = {"message": "That shopping list in not yours does not exist"}
-                    return make_response(jsonify(response)), 404
-
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
                     response = {
                         'message': 'The item name cannot contain special characters. '
@@ -868,8 +868,8 @@ def create_app(config_name):
                 order_by(ShoppingListItem.name.asc()).paginate(page, limit)
             results = []
 
-            if not paginated_items:
-                response = {'message': 'The list has no items'}
+            if not paginated_items.items:
+                response = {'message': 'That list has no items'}
                 return make_response(jsonify(response)), 404
 
             for shopping_list_item in paginated_items.items:
