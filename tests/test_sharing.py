@@ -10,7 +10,6 @@ class ShareTestCase(unittest.TestCase):
     """
     Tests for handling operations related to the sharing system
     """
-
     def setUp(self):
         """
         Set up test variables
@@ -39,61 +38,44 @@ class ShareTestCase(unittest.TestCase):
             {'list_id': 1, 'name': 'Broccoli', 'quantity': 20, 'unit_price': 5}
 
         with self.app.app_context():
-            # create all tables
+            # Create all tables
             db.session.close()
             db.drop_all()
             db.create_all()
+            
+            # Register users
+            self.client().post('/v1/auth/register', data=self.user1)
+            self.client().post('/v1/auth/register', data=self.user2)
+            
+            # Create list for user 1 and add items
+            login_res = self.client().post('/v1/auth/login', data=self.user1)
+            access_token = json.loads(login_res.data.decode())['access-token']
+            self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token}, 
+                               data=self.shopping_list)
 
-    def setup_users(self):
+            self.client().post('/v1/shopping_lists/1/items', 
+                               headers={'x-access-token': access_token},
+                               data=self.shopping_list_item)
+            self.client().post('/v1/shopping_lists/1/items',
+                               headers={'x-access-token': access_token},
+                               data=self.shopping_list_item2)
+            
+            # Send friend request
+            self.client().post('/v1/friends', 
+                               headers={'x-access-token': access_token},
+                               data={'friend_id': 3})
+            
+            # Accept request
+            login_res = self.client().post('/v1/auth/login', data=self.user2)
+            access_token = json.loads(login_res.data.decode())['access-token']
+            self.client().put('/v1/friends/2',
+                              headers={'x-access-token': access_token})
+
+    def login_user(self, user):
         """
-        Register and log in users
+        Helper function to login user
         """
-        # create users by making POST requests
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        self.assertEqual(res.status_code, 201)
-        res = self.client().post('/v1/auth/register', data=self.user2)
-        self.assertEqual(res.status_code, 201)
-
-        # Log in the first user
-        login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
-        access_token = json.loads(login_res.data.decode())['access-token']
-
-        # Create a list for sharing
-        res = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
-                                 data=self.shopping_list)
-        self.assertEqual(res.status_code, 201)
-
-        # Add items to the list
-        res = self.client().post('/v1/shopping_lists/1/items',
-                                 headers={'x-access-token': access_token},
-                                 data=self.shopping_list_item)
-        self.assertEqual(res.status_code, 201)
-
-        res = self.client().post('/v1/shopping_lists/1/items',
-                                 headers={'x-access-token': access_token},
-                                 data=self.shopping_list_item2)
-        self.assertEqual(res.status_code, 201)
-
-        # Send friend request
-        res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token},
-                                 data={'friend_id': 3})
-        self.assertEqual(res.status_code, 200)
-
-        # Login as other user and accept friend request
-        login_res = self.client().post('/v1/auth/login', data=self.user2)
-        self.assertEqual(login_res.status_code, 200)
-        access_token = json.loads(login_res.data.decode())['access-token']
-
-        # Accept friend request
-        res = self.client().put('/v1/friends/2',
-                                headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 200)
-
-        # Log in as first user
-        login_res = self.client().post('/v1/auth/login', data=self.user1)
-        self.assertEqual(login_res.status_code, 200)
+        login_res = self.client().post('/v1/auth/login', data=user)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         return access_token
@@ -102,7 +84,7 @@ class ShareTestCase(unittest.TestCase):
         """
         Test whether a user can share a list with another user
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         # Share list
         res = self.client().post('/v1/shopping_lists/share',
@@ -110,57 +92,99 @@ class ShareTestCase(unittest.TestCase):
                                  data={'list_id': 1, 'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
-        # Try to share list twice
-        res = self.client().post('/v1/shopping_lists/share',
-                                 headers={'x-access-token': access_token},
-                                 data={'list_id': 1, 'friend_id': 3})
+    def share_list(self):
+        """
+        Helper function for sharing list
+        """
+        access_token = self.login_user(self.user1)
+
+        result = self.client().post('/v1/shopping_lists/share',
+                                    headers={'x-access-token': access_token},
+                                    data={'list_id': 1, 'friend_id': 3})
+
+        return result
+
+    def test_share_list_twice(self):
+        """
+        Try to share list twice
+        """
+        self.share_list()
+        res = self.share_list()
+
         self.assertEqual(res.status_code, 401)
 
-        # Try to share list with non friend
+    def test_share_with_non_friend(self):
+        """
+        Try to share list with non friend
+        """
+        access_token = self.login_user(self.user1)
+
         res = self.client().post('/v1/shopping_lists/share',
                                  headers={'x-access-token': access_token},
                                  data={'list_id': 1, 'friend_id': 368})
         self.assertEqual(res.status_code, 401)
 
-        # Use the wrong friend id and list id formats
+    def test_share_params(self):
+        """
+        Use the wrong friend id and list id formats
+        """
+        access_token = self.login_user(self.user1)
+
         res = self.client().post('/v1/shopping_lists/share',
                                  headers={'x-access-token': access_token},
                                  data={'friend_id': 'one', 'list_id': 'one'})
         self.assertEqual(res.status_code, 401)
 
-    def test_get_shared_lists(self):
+    def test_get_shared_lists_when_none(self):
         """
-        Test whether a user can get shared shopping lists
+        Try to get shared lists when none have been shared
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         # Try to get lists when non are shared
         res = self.client().get('/v1/shopping_lists/share',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-        # Share list
-        res = self.client().post('/v1/shopping_lists/share',
-                                 headers={'x-access-token': access_token},
-                                 data={'list_id': 1, 'friend_id': 3})
-        self.assertEqual(res.status_code, 200)
+    def test_get_shared_lists(self):
+        """
+        Get shared lists
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
 
         # Get lists
         res = self.client().get('/v1/shopping_lists/share',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Use the wrong limit and page data formats
+    def test_get_shared_list_params(self):
+        """
+        Use the wrong limit and page data formats
+        """
+        access_token = self.login_user(self.user1)
+
         res = self.client().get('/v1/shopping_lists/share?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
-        # Try to search list that doesnt exist
+    def test_search_non_existent_shared_list(self):
+        """
+        Try to search list that doesnt exist
+        """
+        access_token = self.login_user(self.user1)
+
         res = self.client().get('/v1/shopping_lists/share?q=yuujk',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-        # Try to search list that exists
+    def test_search_existent_shared_list(self):
+        """
+        Try to search list that exists
+        """
+        access_token = self.login_user(self.user1)
+
+        self.share_list()
         res = self.client().get('/v1/shopping_lists/share?q=test',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
@@ -169,59 +193,55 @@ class ShareTestCase(unittest.TestCase):
         """
         Test whether a user can get items in a shared list
         """
-        access_token = self.setup_users()
-
-        # Share list
-        res = self.client().post('/v1/shopping_lists/share',
-                                 headers={'x-access-token': access_token},
-                                 data={'list_id': 1, 'friend_id': 3})
-        self.assertEqual(res.status_code, 200)
+        self.share_list()
+        access_token = self.login_user(self.user1)
 
         # Get list items
         res = self.client().get('/v1/shopping_lists/share/1/items',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-        # Use the wrong limit and page data formats
+    def test_get_shared_list_pagination_params(self):
+        """
+        Use the wrong limit and page data formats
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
         res = self.client().get('/v1/shopping_lists/share/1/items?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
-
-        # Try to search list item that doesnt exist
-        res = self.client().get('/v1/shopping_lists/share/1/items?q=yuujk',
-                                headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 404)
-
-        # Try to search list that exists
-        res = self.client().get('/v1/shopping_lists/share/1/items?q=tomato',
-                                headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 200)
 
     def test_stop_sharing_list(self):
         """
         Test whether a user can stop sharing a shopping list
         """
-        access_token = self.setup_users()
+        self.share_list()
+        access_token = self.login_user(self.user1)
 
-        # Share list
-        res = self.client().post('/v1/shopping_lists/share',
-                                 headers={'x-access-token': access_token},
-                                 data={'list_id': 1, 'friend_id': 3})
-        self.assertEqual(res.status_code, 200)
-
-        # Stop sharing
         res = self.client().delete('/v1/shopping_lists/share/1',
                                    headers={'x-access-token': access_token}, 
                                    data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
-        # Try to remove a list that's not shared
+    def test_stop_sharing_non_shared_list(self):
+        """
+        Try to remove a list that's not shared
+        """
+        access_token = self.login_user(self.user1)
+
         res = self.client().delete('/v1/shopping_lists/share/1',
                                    headers={'x-access-token': access_token}, 
                                    data={'friend_id': 3})
         self.assertEqual(res.status_code, 404)
 
-        # Use the wrong list id formats
+    def test_stop_shared_params(self):
+        """
+        Use the wrong list id formats
+        """
+        self.share_list()
+        access_token = self.login_user(self.user1)
+
         res = self.client().delete('/v1/shopping_lists/share/one',
                                    headers={'x-access-token': access_token},
                                    data={'friend_id': 3})

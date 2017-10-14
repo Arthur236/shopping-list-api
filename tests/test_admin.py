@@ -40,11 +40,15 @@ class AuthTestCase(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
-    def set_up_admin_data(self):
-        self.client().post('/v1/auth/register', data=self.user1)
-        self.client().post('/v1/auth/register', data=self.user2)
+            # Register users
+            self.client().post('/v1/auth/register', data=self.user1)
+            self.client().post('/v1/auth/register', data=self.user2)
 
-        login_res = self.client().post('/v1/auth/login', data=self.admin)
+    def login_user(self, user):
+        """
+        Helper function to login users
+        """
+        login_res = self.client().post('/v1/auth/login', data=user)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         return access_token
@@ -53,7 +57,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Test that an admin can get all users
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         # Get all the users by making a GET request
         res = self.client().get('/v1/admin/users', headers={'x-access-token': access_token})
@@ -63,7 +67,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to get users without admin rights
         """
-        self.set_up_admin_data()
+        self.login_user(self.admin)
         login_res = self.client().post('/v1/auth/login', data=self.user2)
         access_token = json.loads(login_res.data.decode())['access-token']
 
@@ -75,7 +79,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to search user that does not exist 
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().get('/v1/admin/users?q=70g', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
@@ -84,7 +88,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to search user that exists
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().get('/v1/admin/users?q=us', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
@@ -93,7 +97,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Use the wrong limit and page data formats
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().get('/v1/admin/users?page=one&limit=two',
                                 headers={'x-access-token': access_token})
@@ -103,28 +107,17 @@ class AuthTestCase(unittest.TestCase):
         """
         Get paginated users
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().get('/v1/admin/users?page=1&limit=2',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-    def test_get_paginated_users_when_none(self):
-        """
-        Try to get paginated users when none exist
-        """
-        login_res = self.client().post('/v1/auth/login', data=self.admin)
-        access_token = json.loads(login_res.data.decode())['access-token']
-
-        res = self.client().get('/v1/admin/users?page=1&limit=2',
-                                headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 404)
-
     def test_get_user_by_id(self):
         """
         Test that an admin can get a user by their id
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         # Get specific user
         res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
@@ -134,7 +127,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to get non existing user
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().get('/v1/admin/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
@@ -143,7 +136,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to get user without admin rights
         """
-        self.set_up_admin_data()
+        self.login_user(self.admin)
         login_res = self.client().post('/v1/auth/login', data=self.user2)
         access_token = json.loads(login_res.data.decode())['access-token']
 
@@ -154,7 +147,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to delete user without admin rights
         """
-        self.set_up_admin_data()
+        self.login_user(self.admin)
         login_res = self.client().post('/v1/auth/login', data=self.user2)
         access_token = json.loads(login_res.data.decode())['access-token']
 
@@ -165,7 +158,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Try to access with admin rights
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         # Attempt to delete a user
         res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
@@ -175,7 +168,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Attempt to delete a non existent user
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().delete('/v1/admin/users/298',
                                    headers={'x-access-token': access_token})
@@ -185,10 +178,25 @@ class AuthTestCase(unittest.TestCase):
         """
         Attempt to delete yourself
         """
-        access_token = self.set_up_admin_data()
+        access_token = self.login_user(self.admin)
 
         res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
+
+    def test_get_paginated_users_when_none(self):
+        """
+        Try to get paginated users when none exist
+        """
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        # Delete users
+        self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
+        self.client().delete('/v1/admin/users/3', headers={'x-access-token': access_token})
+
+        res = self.client().get('/v1/admin/users?page=1&limit=2',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
 
     def tearDown(self):
         """

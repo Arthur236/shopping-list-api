@@ -343,6 +343,13 @@ def create_app(config_name):
         """
         Loads the user profile
         """
+        try:
+            int(u_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         user = User.query.filter_by(id=u_id).first()
 
         if not user:
@@ -364,6 +371,13 @@ def create_app(config_name):
         """
         Update user details
         """
+        try:
+            int(u_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         if str(user_id) != str(u_id):
             response = {'message': 'You do not have permission to edit this profile'}
             return make_response(jsonify(response)), 403
@@ -426,6 +440,13 @@ def create_app(config_name):
         """
         Deletes a user profile
         """
+        try:
+            int(u_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         if str(user_id) != str(u_id):
             response = {'message': 'You do not have permission to delete this profile'}
             return make_response(jsonify(response)), 403
@@ -458,7 +479,7 @@ def create_app(config_name):
             page = int(request.args.get('page', 1))
         except ValueError:
             # An error occurred, therefore return a string message containing the error
-            response = {'message': 'The parameter provided should be an integer'}
+            response = {'message': 'The parameters provided should be integers'}
             return make_response(jsonify(response)), 401
 
         if search_query:
@@ -521,6 +542,13 @@ def create_app(config_name):
         """
         Retrieves a specific user
         """
+        try:
+            int(u_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         user = User.query.filter_by(id=user_id).first()
 
         if not user.admin:
@@ -550,6 +578,13 @@ def create_app(config_name):
         """
         Deletes a specific user
         """
+        try:
+            int(u_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         user = User.query.filter_by(id=user_id).first()
 
         if not user.admin:
@@ -626,7 +661,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:
@@ -680,6 +715,13 @@ def create_app(config_name):
         """
         Retrieves a specific shopping list
         """
+        try:
+            int(list_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         # retrieve a shopping list using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
@@ -704,6 +746,13 @@ def create_app(config_name):
         """
         Updates a specific shopping list
         """
+        try:
+            int(list_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         # retrieve a shopping list using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
@@ -756,6 +805,13 @@ def create_app(config_name):
         """
         Deletes a specific shopping list
         """
+        try:
+            int(list_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         # retrieve a shopping list using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
@@ -782,6 +838,13 @@ def create_app(config_name):
         GET - Retrieves all items belonging to a specific shopping list
         POST - Creates a shopping list item
         """
+        try:
+            int(list_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
+
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
         if not shopping_list:
@@ -789,9 +852,14 @@ def create_app(config_name):
             return make_response(jsonify(response)), 404
 
         if request.method == "POST":
-            name = str(request.data.get('name', ''))
-            quantity = str(request.data.get('quantity', ''))
-            unit_price = str(request.data.get('unit_price', ''))
+            try:
+                name = str(request.data.get('name', ''))
+                quantity = float(request.data.get('quantity', 0.0))
+                unit_price = float(request.data.get('unit_price', 0.0))
+            except ValueError:
+                # An error occurred, therefore return a string message containing the error
+                response = {'message': 'The parameters provided should be strings or floats'}
+                return make_response(jsonify(response)), 401
 
             if name and quantity and unit_price:
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
@@ -823,10 +891,10 @@ def create_app(config_name):
                     response.status_code = 201
                     return response
 
-                response = {'message': 'That item item already exists.'}
+                response = {'message': 'That item already exists.'}
                 return make_response(jsonify(response)), 401
 
-            response = {'message': 'Please provide all the details.'}
+            response = {'message': 'Please provide all required the details.'}
             return make_response(jsonify(response)), 400
         else:
             # GET
@@ -836,7 +904,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:
@@ -892,6 +960,14 @@ def create_app(config_name):
         """
         Retrieves a specific item
         """
+        try:
+            int(list_id)
+            int(item_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameters provided should be integers'}
+            return make_response(jsonify(response)), 401
+
         # Retrieve a shopping list item using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
@@ -919,12 +995,20 @@ def create_app(config_name):
         """
         Updates a specific item
         """
+        try:
+            int(list_id)
+            int(item_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameters provided should be integers'}
+            return make_response(jsonify(response)), 401
+
         # retrieve a shopping list item using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
         if not shopping_list or not shopping_list_item:
-            response = {"message": "That shopping list or item does not exist"}
+            response = {"message": "That shopping list or item is not yours or does not exist"}
             return make_response(jsonify(response)), 404
 
         if request.method == 'PUT':
@@ -970,24 +1054,26 @@ def create_app(config_name):
                     response.status_code = 201
                     return response
 
-                response = {"message": "You do not have permissions to edit that item"}
-                return make_response(jsonify(response)), 403
-
-            response = {"message": "Please provide all the details"}
-            return make_response(jsonify(response)), 400
-
     @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['DELETE'])
     @token_required
     def delete_item(user_id, list_id, item_id):
         """
         Deletes a specific item
         """
+        try:
+            list_id = int(list_id)
+            item_id = int(item_id)
+        except ValueError:
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameters provided should be integers'}
+            return make_response(jsonify(response)), 401
+
         # retrieve a shopping list item using it's id
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
         if not shopping_list or not shopping_list_item:
-            response = {"message": "That shopping list or item does not exist"}
+            response = {"message": "That shopping list or item is not yours or does not exist"}
             return make_response(jsonify(response)), 404
 
         if request.method == 'DELETE':
@@ -995,9 +1081,6 @@ def create_app(config_name):
                 shopping_list_item.delete()
                 response = {"message": "Item {} deleted successfully".format(shopping_list_item.id)}
                 return make_response(jsonify(response)), 200
-
-            response = {"message": "You do not have permissions to delete that item"}
-            return make_response(jsonify(response)), 403
 
     # ************************************ Friend System ************************************
 
@@ -1013,7 +1096,7 @@ def create_app(config_name):
                 friend_id = int(request.data.get('friend_id', ''))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if friend_id == user_id:
@@ -1052,7 +1135,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:
@@ -1188,7 +1271,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:
@@ -1260,7 +1343,7 @@ def create_app(config_name):
                 friend_id = int(request.data.get('friend_id', ''))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if list_id and friend_id:
@@ -1294,7 +1377,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:
@@ -1414,7 +1497,7 @@ def create_app(config_name):
                 page = int(request.args.get('page', 1))
             except ValueError:
                 # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
+                response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             if search_query:

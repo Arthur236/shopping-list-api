@@ -35,19 +35,16 @@ class FriendTestCase(unittest.TestCase):
             db.session.close()
             db.drop_all()
             db.create_all()
-
-    def setup_users(self):
+            
+            # Register Users
+            self.client().post('/v1/auth/register', data=self.user1)
+            self.client().post('/v1/auth/register', data=self.user2)
+    
+    def login_user(self, user):
         """
-        Register and log in users
+        Helper function to login users
         """
-        # create user by making a POST request
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        res = self.client().post('/v1/auth/register', data=self.user2)
-
-        login_res = self.client().post('/v1/auth/login', data={
-            'email': 'user1@gmail.com',
-            'password': 'password'
-        })
+        login_res = self.client().post('/v1/auth/login', data=user)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         return access_token
@@ -56,7 +53,7 @@ class FriendTestCase(unittest.TestCase):
         """
         Test user can send friend request
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         # Send another user a friend request
         res = self.client().post('/v1/friends',
@@ -68,11 +65,11 @@ class FriendTestCase(unittest.TestCase):
         """
         Try to send request twice
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
-        res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
-                                 data={'friend_id': 3})
+        self.client().post('/v1/friends',
+                           headers={'x-access-token': access_token},
+                           data={'friend_id': 3})
 
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token}, 
@@ -83,7 +80,7 @@ class FriendTestCase(unittest.TestCase):
         """
         Use the wrong friend id format
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token},
@@ -94,7 +91,7 @@ class FriendTestCase(unittest.TestCase):
         """
         Try to befriend yourself
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token}, 
@@ -105,7 +102,7 @@ class FriendTestCase(unittest.TestCase):
         """
         Try to befriend user that doesnt exist
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token}, 
@@ -113,7 +110,7 @@ class FriendTestCase(unittest.TestCase):
         self.assertEqual(res.status_code, 401)
 
     def send_user2_request(self):
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token}, 
@@ -186,7 +183,7 @@ class FriendTestCase(unittest.TestCase):
         """
         Test user can get all their friends
         """
-        access_token = self.setup_users()
+        access_token = self.login_user(self.user1)
 
         # Send another user a friend request
         access_token = self.send_user2_request()

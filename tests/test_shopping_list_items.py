@@ -192,6 +192,16 @@ class ShoppingListTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_list_and_item_id_format(self):
+        """
+        Test whether list and item ids are both ints
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/shopping_lists/hidw/items/guie',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
     def test_api_can_get_item_by_id(self):
         """
         Test API can get a single shopping list item by using it's id
@@ -231,6 +241,19 @@ class ShoppingListTestCase(unittest.TestCase):
                                    "name": "Oranges", "quantity": 2, "unit_price": 20
                                })
         self.assertEqual(rv.status_code, 201)
+
+    def test_non_existent_item_edit(self):
+        """
+        Test if non existent item can be edited
+        """
+        access_token = self.login_user(self.user1)
+
+        rv = self.client().put('/v1/shopping_lists/1/items/168',
+                               headers={'x-access-token': access_token},
+                               data={
+                                   "name": "Oranges", "quantity": 2, "unit_price": 20
+                               })
+        self.assertEqual(rv.status_code, 404)
 
     def test_item_edit_special_chars(self):
         """
