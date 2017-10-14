@@ -242,6 +242,25 @@ class ShareTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
+    def test_get_shared_list_pagination_items_none(self):
+        """
+        Try to get paginated items when list is empty
+        """
+        # Delete items
+        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        access_token = json.loads(login_res.data.decode())['access-token']
+        self.client().delete('/v1/shopping_lists/1/items/1',
+                             headers={'x-access-token': access_token})
+        self.client().delete('/v1/shopping_lists/1/items/2',
+                             headers={'x-access-token': access_token})
+
+        self.share_list()
+        access_token = self.login_user(self.user2)
+
+        res = self.client().get('/v1/shopping_lists/share/1/items?page=1&limit=2',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
     def test_search_non_existent_shared_list_items(self):
         """
         Search items that are not in list

@@ -1534,7 +1534,7 @@ def create_app(config_name):
             results = []
 
             if not paginated_items.items:
-                response = {'message': 'The list has no items'}
+                response = {'message': 'That list has no items'}
                 return make_response(jsonify(response)), 404
 
             for shopping_list_item in paginated_items.items:
