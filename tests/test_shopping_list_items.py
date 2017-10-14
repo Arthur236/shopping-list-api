@@ -10,6 +10,14 @@ class ShoppingListTestCase(unittest.TestCase):
     """
     This class represents the shopping list item test case
     """
+    def login_user(self, user):
+        """
+        Helper function to login user
+        """
+        login_res = self.client().post('/v1/auth/login', data=user)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        return access_token
 
     def setUp(self):
         """
@@ -38,41 +46,46 @@ class ShoppingListTestCase(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
-    def setup_users_and_lists(self):
-        """
-        Register and log in users
-        """
-        # create users by making POST requests
-        self.client().post('/v1/auth/register', data=self.user1)
-        self.client().post('/v1/auth/register', data=self.user2)
+            self.client().post('/v1/auth/register', data=self.user1)
+            self.client().post('/v1/auth/register', data=self.user2)
 
-        # Log in the first user
-        login_res = self.client().post('/v1/auth/login', data=self.user1)
-        access_token = json.loads(login_res.data.decode())['access-token']
+            user1_token = self.login_user(self.user1)
+            self.client().post('/v1/shopping_lists', headers={'x-access-token': user1_token},
+                               data=self.shopping_list)
 
-        self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
-                           data=self.shopping_list)
-
-        return access_token
+            user2_token = self.login_user(self.user2)
+            self.client().post('/v1/shopping_lists', headers={'x-access-token': user2_token},
+                               data=self.shopping_list)
 
     def test_item_special_chars(self):
         """
         Try to create item with special characters
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/shopping_lists/1/items',
                                  headers={'x-access-token': access_token},
                                  data=self.shopping_list_item_special)
         self.assertEqual(res.status_code, 400)
 
+    def test_list_exists(self):
+        """
+        Test if shopping list exists
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().post('/v1/shopping_lists/189/items',
+                                 headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item_special)
+        self.assertEqual(res.status_code, 404)
+
     def test_item_exists(self):
         """
         Try to create an item that already exists
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
 
-        self.client().post('/v1/shopping_lists/1/items', 
+        self.client().post('/v1/shopping_lists/1/items',
                            headers={'x-access-token': access_token},
                            data=self.shopping_list_item)
 
@@ -82,11 +95,21 @@ class ShoppingListTestCase(unittest.TestCase):
         # Assert that the shopping list item is created
         self.assertEqual(res.status_code, 401)
 
+    def test_item_create_params(self):
+        """
+        Test if all parameters are provided
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().post('/v1/shopping_lists/1/items',
+                                 headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 400)
+
     def test_item_creation(self):
         """
         Test API can create a shopping list item (POST request)
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
 
         # Create shopping list item
         res = self.client().post('/v1/shopping_lists/1/items',
@@ -98,7 +121,7 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Helper function to create item
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/shopping_lists/1/items',
                                  headers={'x-access-token': access_token},
@@ -109,8 +132,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Test API can get shopping list items
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
         # Get items
         result = self.client().get('/v1/shopping_lists/1/items',
@@ -121,7 +144,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Use the wrong limit and page data formats
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
+
         res = self.client().get('/v1/shopping_lists/1/items?page=one&limit=two',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
@@ -130,7 +154,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Try to search for items in list
         """
-        access_token = self.setup_users_and_lists()
+        access_token = self.login_user(self.user1)
+
         res = self.client().get('/v1/shopping_lists/1/items?q=vuyjb',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
@@ -139,8 +164,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Try to get paginated items
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
         res = self.client().get('/v1/shopping_lists/1/items?page=1&limit=2',
                                 headers={'x-access-token': access_token})
@@ -150,10 +175,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Test API can get a single shopping list item by using it's id
         """
-        access_token = self.setup_users_and_lists()
         res = self.create_item()
-
-        # Get the response data in json format
+        access_token = self.login_user(self.user1)
         results = json.loads(res.data.decode())
 
         result = self.client().get('/v1/shopping_lists/1/items/{}'.format(results['id']),
@@ -165,8 +188,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Test API can edit an existing shopping list item. (PUT request)
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
         rv = self.client().put('/v1/shopping_lists/1/items/1',
                                headers={'x-access-token': access_token},
@@ -175,12 +198,12 @@ class ShoppingListTestCase(unittest.TestCase):
                                })
         self.assertEqual(rv.status_code, 201)
 
-    def test_item_special_chars(self):
+    def test_item_edit_special_chars(self):
         """
         Try to edit with special chars
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
         rv = self.client().put('/v1/shopping_lists/1/items/1',
                                headers={'x-access-token': access_token},
@@ -191,10 +214,10 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Try to use name of item that already exists
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
-        self.client().post('/v1/shopping_lists/1/items', 
+        self.client().post('/v1/shopping_lists/1/items',
                            headers={'x-access-token': access_token},
                            data=self.shopping_list_item2)
 
@@ -207,8 +230,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Test API can delete an existing shopping list item. (DELETE request)
         """
-        access_token = self.setup_users_and_lists()
         res = self.create_item()
+        access_token = self.login_user(self.user1)
 
         # Get the shopping list in json
         results = json.loads(res.data.decode())
@@ -222,8 +245,8 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         Try to delete item that doesnt exist
         """
-        access_token = self.setup_users_and_lists()
         self.create_item()
+        access_token = self.login_user(self.user1)
 
         res = self.client().delete('/v1/shopping_lists/1/items/563',
                                    headers={'x-access-token': access_token})
