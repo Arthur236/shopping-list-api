@@ -109,6 +109,17 @@ class AuthTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_get_paginated_users_when_none(self):
+        """
+        Try to get paginated users when none exist
+        """
+        login_res = self.client().post('/v1/auth/login', data=self.admin)
+        access_token = json.loads(login_res.data.decode())['access-token']
+
+        res = self.client().get('/v1/admin/users?page=1&limit=2',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
     def test_get_user_by_id(self):
         """
         Test that an admin can get a user by their id

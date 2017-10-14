@@ -491,10 +491,10 @@ def create_app(config_name):
 
         users = []
         paginated_users = User.query.filter(User.id != user_id).\
-        filter_by(admin=False).\
-        order_by(User.username.asc()).paginate(page, limit)
+            filter_by(admin=False).\
+            order_by(User.username.asc()).paginate(page, limit)
 
-        if not paginated_users:
+        if not paginated_users.items:
             response = {'message': 'No users were found'}
             return make_response(jsonify(response)), 404
 
@@ -657,7 +657,7 @@ def create_app(config_name):
                 order_by(ShoppingList.name.asc()).paginate(page, limit)
             results = []
 
-            if not paginated_lists:
+            if not paginated_lists.items:
                 response = {'message': 'You have no shopping lists'}
                 return make_response(jsonify(response)), 404
 
@@ -684,7 +684,7 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
         if not shopping_list:
-            response = {"message": "That shopping list does not exist"}
+            response = {"message": "That shopping list is not yours or does not exist"}
             return make_response(jsonify(response)), 404
 
         if shopping_list.user_id == user_id:
@@ -698,9 +698,6 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-        response = {"message": "You do not have permissions to view that shopping list"}
-        return make_response(jsonify(response)), 403
-
     @app.route('/shopping_lists/<list_id>', methods=['PUT'])
     @token_required
     def edit_shopping_list(user_id, list_id):
@@ -711,7 +708,7 @@ def create_app(config_name):
         shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
 
         if not shopping_list:
-            response = {"message": "That shopping list does not exist"}
+            response = {"message": "That shopping list is not yours or does not exist"}
             return make_response(jsonify(response)), 404
 
         if request.method == 'PUT':
@@ -753,9 +750,6 @@ def create_app(config_name):
                     response.status_code = 200
                     return response
 
-                response = {"message": "You do not have permissions to edit that shopping list"}
-                return make_response(jsonify(response)), 403
-
             response = {'message': 'Shopping list name not provided.'}
             return make_response(jsonify(response)), 400
 
@@ -770,7 +764,7 @@ def create_app(config_name):
 
         if not shopping_list:
             response = {
-                "message": "That shopping list doesn't exist"
+                "message": "That shopping list is not yours or does not exist"
             }
             return make_response(jsonify(response)), 404
 

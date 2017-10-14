@@ -188,6 +188,18 @@ class ShoppingListTestCase(unittest.TestCase):
         )
         self.assertEqual(res.status_code, 200)
 
+    def test_get_paginated_lists_when_none(self):
+        """
+        Try get paginated lists when user has no lists
+        """
+        access_token = self.setup_users()
+
+        res = self.client().get(
+            '/v1/shopping_lists?page=1&limit=2',
+            headers={'x-access-token': access_token}
+        )
+        self.assertEqual(res.status_code, 404)
+
     def test_get_shopping_list_by_id(self):
         """
         Test API can get a single shopping list by using it's id
@@ -195,8 +207,6 @@ class ShoppingListTestCase(unittest.TestCase):
         access_token = self.setup_users()
 
         rv = self.create_shopping_list()
-
-        # Get the response data in json format
         results = json.loads(rv.data.decode())
 
         result = self.client().get(
@@ -204,6 +214,18 @@ class ShoppingListTestCase(unittest.TestCase):
             headers={'x-access-token': access_token})
         # Assert that the shopping list is actually returned given its ID
         self.assertEqual(result.status_code, 200)
+
+    def test_get_non_existent_list_by_id(self):
+        """
+        Test API can get a shopping list that doesnt exist by using it's id
+        """
+        access_token = self.setup_users()
+
+        result = self.client().get(
+            '/v1/shopping_lists/65',
+            headers={'x-access-token': access_token})
+        # Assert that the shopping list is actually returned given its ID
+        self.assertEqual(result.status_code, 404)
 
     def test_update_non_existent_list(self):
         """
@@ -223,8 +245,6 @@ class ShoppingListTestCase(unittest.TestCase):
         access_token = self.setup_users()
 
         rv = self.create_shopping_list()
-
-        # Get the json with the shopping list
         results = json.loads(rv.data.decode())
 
         # Then, we edit the created shopping list by making a PUT request
@@ -235,6 +255,21 @@ class ShoppingListTestCase(unittest.TestCase):
                 "name": "Electronics"
             })
         self.assertEqual(rv.status_code, 200)
+
+    def test_list_edit_param(self):
+        """
+        Test all required params are present
+        """
+        access_token = self.setup_users()
+
+        rv = self.create_shopping_list()
+        results = json.loads(rv.data.decode())
+
+        # Then, we edit the created shopping list by making a PUT request
+        rv = self.client().put(
+            '/v1/shopping_lists/{}'.format(results['id']),
+            headers={'x-access-token': access_token})
+        self.assertEqual(rv.status_code, 400)
 
     def test_edit_with_special_chars(self):
         """

@@ -25,7 +25,7 @@ class GeneralTestCase(unittest.TestCase):
             db.drop_all()
             db.create_all()
 
-    def test_nonesistent_url(self):
+    def test_non_existent_url(self):
         """
         Try to access url that doesnt exist
         """
