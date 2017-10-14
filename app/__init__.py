@@ -897,7 +897,7 @@ def create_app(config_name):
         shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
         if not shopping_list or not shopping_list_item:
-            response = {"message": "That shopping list or item does not exist"}
+            response = {"message": "That shopping list or item is not yours or does not exist"}
             return make_response(jsonify(response)), 404
 
         # Check if item belongs to its owner's list
@@ -912,9 +912,6 @@ def create_app(config_name):
             })
             response.status_code = 201
             return response
-
-        response = {"message": "You do not have permissions to view that item"}
-        return make_response(jsonify(response)), 403
 
     @app.route('/shopping_lists/<list_id>/items/<item_id>', methods=['PUT'])
     @token_required

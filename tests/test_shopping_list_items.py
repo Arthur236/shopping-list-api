@@ -152,11 +152,32 @@ class ShoppingListTestCase(unittest.TestCase):
 
     def test_search_non_existent_item(self):
         """
-        Try to search for items in list
+        Try to search for items not in list
         """
         access_token = self.login_user(self.user1)
 
         res = self.client().get('/v1/shopping_lists/1/items?q=vuyjb',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 404)
+
+    def test_search_existent_item(self):
+        """
+        Try to search for items in list
+        """
+        self.create_item()
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/shopping_lists/1/items?q=tom',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 200)
+
+    def test_get_paginated_items_when_none(self):
+        """
+        Try to get paginated items when there are no items
+        """
+        access_token = self.login_user(self.user1)
+
+        res = self.client().get('/v1/shopping_lists/1/items?page=1&limit=2',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
@@ -183,6 +204,19 @@ class ShoppingListTestCase(unittest.TestCase):
                                    headers={'x-access-token': access_token})
         # Assert that the shopping list item is actually returned given its ID
         self.assertEqual(result.status_code, 201)
+
+    def test_get_non_existent_item_by_id(self):
+        """
+        Try to get non existent item by id
+        """
+        res = self.create_item()
+        access_token = self.login_user(self.user1)
+        results = json.loads(res.data.decode())
+
+        result = self.client().get('/v1/shopping_lists/156/items/{}'.format(results['id']),
+                                   headers={'x-access-token': access_token})
+        # Assert that the shopping list item is actually returned given its ID
+        self.assertEqual(result.status_code, 404)
 
     def test_item_can_be_edited(self):
         """

@@ -107,8 +107,12 @@ class ShoppingListTestCase(unittest.TestCase):
             '/v1/shopping_lists',
             headers={'x-access-token': access_token},
             data=self.shopping_list)
-        self.assertEqual(res.status_code, 201)
-        self.assertIn('Groceries', str(res.data))
+        res = self.client().post(
+            '/v1/shopping_lists',
+            headers={'x-access-token': access_token},
+            data=self.shopping_list)
+
+        self.assertEqual(res.status_code, 401)
 
     def test_shopping_list_creation(self):
         """
