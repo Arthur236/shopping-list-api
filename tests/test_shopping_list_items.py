@@ -43,15 +43,15 @@ class ShoppingListTestCase(unittest.TestCase):
         Register and log in users
         """
         # create users by making POST requests
-        res = self.client().post('/v1/auth/register', data=self.user1)
-        res = self.client().post('/v1/auth/register', data=self.user2)
+        self.client().post('/v1/auth/register', data=self.user1)
+        self.client().post('/v1/auth/register', data=self.user2)
 
         # Log in the first user
         login_res = self.client().post('/v1/auth/login', data=self.user1)
         access_token = json.loads(login_res.data.decode())['access-token']
 
-        rv = self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
-                                data=self.shopping_list)
+        self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
+                           data=self.shopping_list)
 
         return access_token
 

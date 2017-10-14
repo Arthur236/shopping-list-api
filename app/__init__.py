@@ -750,9 +750,6 @@ def create_app(config_name):
                     response.status_code = 200
                     return response
 
-            response = {'message': 'Shopping list name not provided.'}
-            return make_response(jsonify(response)), 400
-
     @app.route('/shopping_lists/<list_id>', methods=['DELETE'])
     @token_required
     def delete_shopping_list(user_id, list_id):
@@ -775,9 +772,6 @@ def create_app(config_name):
                     "message": "Shopping list {} deleted successfully".format(shopping_list.id)
                 }
                 return make_response(jsonify(response)), 200
-
-            response = {"message": "You do not have permissions to delete that shopping list"}
-            return make_response(jsonify(response)), 403
 
     # ********************************* Shopping List Items *********************************
 

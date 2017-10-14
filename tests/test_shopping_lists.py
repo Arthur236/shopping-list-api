@@ -256,21 +256,6 @@ class ShoppingListTestCase(unittest.TestCase):
             })
         self.assertEqual(rv.status_code, 200)
 
-    def test_list_edit_param(self):
-        """
-        Test all required params are present
-        """
-        access_token = self.setup_users()
-
-        rv = self.create_shopping_list()
-        results = json.loads(rv.data.decode())
-
-        # Then, we edit the created shopping list by making a PUT request
-        rv = self.client().put(
-            '/v1/shopping_lists/{}'.format(results['id']),
-            headers={'x-access-token': access_token})
-        self.assertEqual(rv.status_code, 400)
-
     def test_edit_with_special_chars(self):
         """
         Try to edit a list with special characters
