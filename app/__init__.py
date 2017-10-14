@@ -86,8 +86,8 @@ def create_app(config_name):
         """
         message = {
             'status': 500,
-            'message': 'Clean up on isle {}! '
-                       'Our team of experts is working to fix this.'.format(request.url)
+            'message': 'Looks like something went wrong. '
+                       'Our team of experts is working to fix this.'
         }
         response = jsonify(message)
         response.status_code = 500

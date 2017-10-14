@@ -1,5 +1,5 @@
 """
-Tests for authentication blueprint
+Tests for authentication
 """
 import unittest
 import json
@@ -39,13 +39,6 @@ class AuthTestCase(unittest.TestCase):
             db.session.close()
             db.drop_all()
             db.create_all()
-
-    def test_nonesistent_url(self):
-        """
-        Try to access url that doesnt exist
-        """
-        res = self.client().get('/v1/auth/register/hei')
-        self.assertEqual(res.status_code, 404)
 
     def test_username_is_valid(self):
         """
