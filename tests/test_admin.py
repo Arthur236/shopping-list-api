@@ -123,6 +123,16 @@ class AuthTestCase(unittest.TestCase):
         res = self.client().get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_get_user_id_format(self):
+        """
+        Test that id is correct format
+        """
+        access_token = self.login_user(self.admin)
+
+        # Get specific user
+        res = self.client().get('/v1/admin/users/two', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
     def test_get_non_existent_user(self):
         """
         Try to get non existing user
@@ -163,6 +173,16 @@ class AuthTestCase(unittest.TestCase):
         # Attempt to delete a user
         res = self.client().delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
+
+    def test_delete_user_id_format(self):
+        """
+        Test id is correct format
+        """
+        access_token = self.login_user(self.admin)
+
+        # Attempt to delete a user
+        res = self.client().delete('/v1/admin/users/two', headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
 
     def test_delete_non_existent_user(self):
         """

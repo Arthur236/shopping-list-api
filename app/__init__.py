@@ -1255,9 +1255,6 @@ def create_app(config_name):
                 response = {"message": "Friend deleted successfully"}
                 return make_response(jsonify(response)), 200
 
-            response = {"message": "You do not have permissions to perform that action"}
-            return make_response(jsonify(response)), 403
-
     @app.route('/friends/requests', methods=['GET'])
     @token_required
     def get_friend_requests(user_id):

@@ -117,6 +117,34 @@ class ShoppingListTestCase(unittest.TestCase):
                                  data=self.shopping_list_item)
         self.assertEqual(res.status_code, 201)
 
+    def test_item_creation_id_format(self):
+        """
+        Test id format is correct
+        """
+        access_token = self.login_user(self.user1)
+
+        # Create shopping list item
+        res = self.client().post('/v1/shopping_lists/one/items',
+                                 headers={'x-access-token': access_token},
+                                 data=self.shopping_list_item)
+        self.assertEqual(res.status_code, 401)
+
+    def test_item_creation_params_format(self):
+        """
+        Test quantity and unit price format is correct
+        """
+        access_token = self.login_user(self.user1)
+
+        # Create shopping list item
+        res = self.client().post('/v1/shopping_lists/1/items',
+                                 headers={'x-access-token': access_token},
+                                 data={
+                                     'name': 'Test',
+                                     'quantity': '100',
+                                     'unit_price': '2.5'
+                                 })
+        self.assertEqual(res.status_code, 401)
+
     def create_item(self):
         """
         Helper function to create item
@@ -242,6 +270,20 @@ class ShoppingListTestCase(unittest.TestCase):
                                })
         self.assertEqual(rv.status_code, 201)
 
+    def test_item_edit_id_format(self):
+        """
+        Test list id and item id format is correct
+        """
+        self.create_item()
+        access_token = self.login_user(self.user1)
+
+        rv = self.client().put('/v1/shopping_lists/one/items/one',
+                               headers={'x-access-token': access_token},
+                               data={
+                                   "name": "Oranges", "quantity": 2, "unit_price": 20
+                               })
+        self.assertEqual(rv.status_code, 401)
+
     def test_non_existent_item_edit(self):
         """
         Test if non existent item can be edited
@@ -297,6 +339,20 @@ class ShoppingListTestCase(unittest.TestCase):
         res = self.client().delete('/v1/shopping_lists/1/items/{}'.format(results['id']),
                                    headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
+
+    def test_item_delete_id_format(self):
+        """
+        Test list id and item id format is correct
+        """
+        self.create_item()
+        access_token = self.login_user(self.user1)
+
+        rv = self.client().delete('/v1/shopping_lists/one/items/one',
+                                  headers={'x-access-token': access_token},
+                                  data={
+                                      "name": "Oranges", "quantity": 2, "unit_price": 20
+                                  })
+        self.assertEqual(rv.status_code, 401)
 
     def test_delete_non_existent_item(self):
         """

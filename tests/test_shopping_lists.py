@@ -233,6 +233,17 @@ class ShoppingListTestCase(unittest.TestCase):
         # Assert that the shopping list is actually returned given its ID
         self.assertEqual(result.status_code, 200)
 
+    def test_get_shopping_list_id_format(self):
+        """
+        Test id is correct format
+        """
+        access_token = self.login_user(self.user1)
+
+        result = self.client().get(
+            '/v1/shopping_lists/one',
+            headers={'x-access-token': access_token})
+        self.assertEqual(result.status_code, 401)
+
     def test_get_non_existent_list_by_id(self):
         """
         Test API can get a shopping list that doesnt exist by using it's id
@@ -273,6 +284,17 @@ class ShoppingListTestCase(unittest.TestCase):
                 "name": "Electronics"
             })
         self.assertEqual(rv.status_code, 200)
+
+    def test_shopping_list_edit_id_format(self):
+        """
+        Test id is correct format
+        """
+        access_token = self.login_user(self.user1)
+
+        result = self.client().put(
+            '/v1/shopping_lists/one',
+            headers={'x-access-token': access_token})
+        self.assertEqual(result.status_code, 401)
 
     def test_edit_with_special_chars(self):
         """
@@ -326,6 +348,17 @@ class ShoppingListTestCase(unittest.TestCase):
             '/v1/shopping_lists/{}'.format(results['id']),
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
+
+    def test_shopping_list_delete_id_format(self):
+        """
+        Test id is correct format
+        """
+        access_token = self.login_user(self.user1)
+
+        result = self.client().delete(
+            '/v1/shopping_lists/one',
+            headers={'x-access-token': access_token})
+        self.assertEqual(result.status_code, 401)
 
     def test_non_existent_list_delete(self):
         """

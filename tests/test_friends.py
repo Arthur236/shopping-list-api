@@ -133,6 +133,19 @@ class FriendTestCase(unittest.TestCase):
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
+    def test_accept_request_twice(self):
+        """
+        Test user can accept friend request twice
+        """
+        # Send another user a friend request
+        access_token = self.send_user2_request()
+
+        self.client().put('/v1/friends/2',
+                          headers={'x-access-token': access_token})
+        res = self.client().put('/v1/friends/2',
+                                headers={'x-access-token': access_token})
+        self.assertEqual(res.status_code, 401)
+
     def test_friend_id_accept_param(self):
         """
         Use the wrong friend id format
