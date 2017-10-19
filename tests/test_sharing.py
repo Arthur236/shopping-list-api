@@ -46,31 +46,30 @@ class ShareTestCase(unittest.TestCase):
             db.session.close()
             db.drop_all()
             db.create_all()
-            
             # Register users
             self.client().post('/v1/auth/register', data=self.user1)
             self.client().post('/v1/auth/register', data=self.user2)
-            
+
             # Create list for user 1 and add items
             login_res = self.client().post('/v1/auth/login', data=self.user1)
             access_token = json.loads(login_res.data.decode())['access-token']
-            self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token}, 
+            self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                data=self.shopping_list)
             self.client().post('/v1/shopping_lists', headers={'x-access-token': access_token},
                                data=self.shopping_list2)
 
-            self.client().post('/v1/shopping_lists/1/items', 
+            self.client().post('/v1/shopping_lists/1/items',
                                headers={'x-access-token': access_token},
                                data=self.shopping_list_item)
             self.client().post('/v1/shopping_lists/1/items',
                                headers={'x-access-token': access_token},
                                data=self.shopping_list_item2)
-            
+
             # Send friend request
-            self.client().post('/v1/friends', 
+            self.client().post('/v1/friends',
                                headers={'x-access-token': access_token},
                                data={'friend_id': 3})
-            
+
             # Accept request
             login_res = self.client().post('/v1/auth/login', data=self.user2)
             access_token = json.loads(login_res.data.decode())['access-token']
@@ -291,7 +290,7 @@ class ShareTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         res = self.client().delete('/v1/shopping_lists/share/1',
-                                   headers={'x-access-token': access_token}, 
+                                   headers={'x-access-token': access_token},
                                    data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
@@ -302,7 +301,7 @@ class ShareTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         res = self.client().delete('/v1/shopping_lists/share/1',
-                                   headers={'x-access-token': access_token}, 
+                                   headers={'x-access-token': access_token},
                                    data={'friend_id': 3})
         self.assertEqual(res.status_code, 404)
 

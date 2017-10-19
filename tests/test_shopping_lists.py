@@ -94,7 +94,7 @@ class ShoppingListTestCase(unittest.TestCase):
             '/v1/shopping_lists',
             headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 400)
-        
+
     def test_shopping_list_exists(self):
         """
         Test if shopping list already exists
@@ -135,7 +135,7 @@ class ShoppingListTestCase(unittest.TestCase):
         """
         access_token = self.login_user(self.user1)
 
-        results = self.client().post('/v1/shopping_lists', 
+        results = self.client().post('/v1/shopping_lists',
                                      headers={'x-access-token': access_token},
                                      data=self.shopping_list)
 
@@ -323,13 +323,13 @@ class ShoppingListTestCase(unittest.TestCase):
 
         self.create_shopping_list()
 
-        rv = self.client().post('/v1/shopping_lists', 
-                                headers={'x-access-token': access_token}, 
+        rv = self.client().post('/v1/shopping_lists',
+                                headers={'x-access-token': access_token},
                                 data={'name': 'Movies'})
         results = json.loads(rv.data.decode())
 
-        rv = self.client().put('/v1/shopping_lists/{}'.format(results['id']), 
-                               headers={'x-access-token': access_token}, 
+        rv = self.client().put('/v1/shopping_lists/{}'.format(results['id']),
+                               headers={'x-access-token': access_token},
                                data={'name': 'Groceries'})
         self.assertEqual(rv.status_code, 401)
 

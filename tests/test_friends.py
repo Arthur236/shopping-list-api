@@ -35,11 +35,10 @@ class FriendTestCase(unittest.TestCase):
             db.session.close()
             db.drop_all()
             db.create_all()
-            
             # Register Users
             self.client().post('/v1/auth/register', data=self.user1)
             self.client().post('/v1/auth/register', data=self.user2)
-    
+
     def login_user(self, user):
         """
         Helper function to login users
@@ -57,7 +56,7 @@ class FriendTestCase(unittest.TestCase):
 
         # Send another user a friend request
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
+                                 headers={'x-access-token': access_token},
                                  data={'friend_id': 3})
         self.assertEqual(res.status_code, 200)
 
@@ -72,7 +71,7 @@ class FriendTestCase(unittest.TestCase):
                            data={'friend_id': 3})
 
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
+                                 headers={'x-access-token': access_token},
                                  data={'friend_id': 3})
         self.assertEqual(res.status_code, 401)
 
@@ -94,7 +93,7 @@ class FriendTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
+                                 headers={'x-access-token': access_token},
                                  data={'friend_id': 2})
         self.assertEqual(res.status_code, 403)
 
@@ -105,21 +104,24 @@ class FriendTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
+                                 headers={'x-access-token': access_token},
                                  data={'friend_id': 256})
         self.assertEqual(res.status_code, 401)
 
     def send_user2_request(self):
+        """
+        Helper method to send a request to a second user
+        """
         access_token = self.login_user(self.user1)
 
-        res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
-                                 data={'friend_id': 3})
+        self.client().post('/v1/friends',
+                           headers={'x-access-token': access_token},
+                           data={'friend_id': 3})
 
         # Login as other user
         login_res = self.client().post('/v1/auth/login', data=self.user2)
         access_token = json.loads(login_res.data.decode())['access-token']
-        
+
         return access_token
 
     def test_accept_request(self):
@@ -172,7 +174,7 @@ class FriendTestCase(unittest.TestCase):
         """
         access_token = self.send_user2_request()
 
-        self.client().put('/v1/friends/2', 
+        self.client().put('/v1/friends/2',
                           headers={'x-access-token': access_token})
         res = self.client().post('/v1/friends',
                                  headers={'x-access-token': access_token},
@@ -185,11 +187,11 @@ class FriendTestCase(unittest.TestCase):
         """
         access_token = self.send_user2_request()
 
-        self.client().post('/v1/friends', 
-                           headers={'x-access-token': access_token}, 
+        self.client().post('/v1/friends',
+                           headers={'x-access-token': access_token},
                            data={'friend_id': 2})
         res = self.client().post('/v1/friends',
-                                 headers={'x-access-token': access_token}, 
+                                 headers={'x-access-token': access_token},
                                  data={'friend_id': 2})
         self.assertEqual(res.status_code, 401)
 
@@ -203,7 +205,7 @@ class FriendTestCase(unittest.TestCase):
         access_token = self.send_user2_request()
 
         # Try to get friends when you have none
-        res = self.client().get('/v1/friends', 
+        res = self.client().get('/v1/friends',
                                 headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
@@ -224,7 +226,7 @@ class FriendTestCase(unittest.TestCase):
         """
         access_token = self.send_user2_request()
 
-        self.client().put('/v1/friends/2', 
+        self.client().put('/v1/friends/2',
                           headers={'x-access-token': access_token})
 
         res = self.client().get('/v1/friends', headers={'x-access-token': access_token})
@@ -255,7 +257,7 @@ class FriendTestCase(unittest.TestCase):
         """
         access_token = self.send_user2_request()
 
-        self.client().put('/v1/friends/2', 
+        self.client().put('/v1/friends/2',
                           headers={'x-access-token': access_token})
 
         res = self.client().get('/v1/friends?q=user', headers={'x-access-token': access_token}, )
@@ -268,7 +270,7 @@ class FriendTestCase(unittest.TestCase):
         access_token = self.send_user2_request()
 
         # Accept friend request
-        self.client().put('/v1/friends/2', 
+        self.client().put('/v1/friends/2',
                           headers={'x-access-token': access_token})
 
         res = self.client().delete('/v1/friends/2',

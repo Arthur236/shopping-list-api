@@ -111,6 +111,9 @@ class AuthTestCase(unittest.TestCase):
         self.assertTrue(result['access-token'])
 
     def login_user(self, user):
+        """
+        Helper function to log in users
+        """
         self.create_user(user)
         login_res = self.client().post('/v1/auth/login', data=user)
         access_token = json.loads(login_res.data.decode())['access-token']
@@ -149,8 +152,6 @@ class AuthTestCase(unittest.TestCase):
         }
         # Send a POST request to /v1/auth/login with the data above
         res = self.client().post('/v1/auth/login', data=not_a_user)
-        # Get the result in json
-        result = json.loads(res.data.decode())
 
         # Assert that this response must contain an error message
         # and an error status code 401(Unauthorized)
@@ -165,7 +166,7 @@ class AuthTestCase(unittest.TestCase):
         res = self.client().post('/v1/auth/reset', data={'email': 'jwhe89@gmail.com'})
         self.assertEqual(res.status_code, 401)
 
-    def test_password_reset_email_parameter(self):
+    def test_pass_reset_email_parameter(self):
         """
         Exclude email parameter
         """
@@ -280,9 +281,9 @@ class AuthTestCase(unittest.TestCase):
         res = self.client().get('/v1/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
-    def test_update_another_users_profile(self):
+    def test_up_another_user_profile(self):
         """
-        Test that a user can update their profile details
+        Try to update another user's profile
         """
         # Create user by making a POST request
         self.create_user(self.user1)
@@ -297,7 +298,7 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 403)
 
-    def test_special_chars_profile_update(self):
+    def test_sp_chars_profile_update(self):
         """
         Put special characters in username
         """
@@ -312,7 +313,7 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 400)
 
-    def test_invalid_email_profile_update(self):
+    def test_invalid_email_prof_up(self):
         """
         Use invalid email
         """
@@ -342,7 +343,7 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 400)
 
-    def test_email_exists_update_profile(self):
+    def test_email_exists_up_prof(self):
         """
         Use an email that already exists
         """
@@ -380,7 +381,7 @@ class AuthTestCase(unittest.TestCase):
                                 })
         self.assertEqual(res.status_code, 200)
 
-    def test_delete_another_user_profile(self):
+    def test_del_diff_user_prof(self):
         """
         Try to delete another user's profile
         """

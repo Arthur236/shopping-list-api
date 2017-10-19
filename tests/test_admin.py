@@ -74,10 +74,10 @@ class AuthTestCase(unittest.TestCase):
         # Get all the users by making a GET request
         res = self.client().get('/v1/admin/users', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
-        
+
     def test_search_non_existent_user(self):
         """
-        Try to search user that does not exist 
+        Try to search user that does not exist
         """
         access_token = self.login_user(self.admin)
 
@@ -203,7 +203,7 @@ class AuthTestCase(unittest.TestCase):
         res = self.client().delete('/v1/admin/users/1', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
-    def test_get_paginated_users_when_none(self):
+    def test_get_paginated_users_wn(self):
         """
         Try to get paginated users when none exist
         """
