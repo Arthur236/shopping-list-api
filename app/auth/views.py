@@ -11,16 +11,9 @@ from sqlalchemy import func, or_, and_
 import jwt
 from flask_bcrypt import Bcrypt
 from app.models import User, PasswordReset
+from app.decorators import MyDecorator
+md = MyDecorator()
 
-
-def validate_email(email):
-    """
-    Helper function to validate email
-    """
-    if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
-        return True
-
-    return False
 
 class RegistrationView(MethodView):
     """
@@ -29,14 +22,14 @@ class RegistrationView(MethodView):
 
     def post(self):
         """
-        Handles user registration
+        POST request for user registration
         """
         username = str(request.data.get('username', ''))
         email = str(request.data.get('email', ''))
         password = str(request.data.get('password', ''))
 
         if email and password and username:
-            email_resp = validate_email(email)
+            email_resp = md.validate_email(email)
             if not email_resp:
                 response = {'message': 'The email is not valid'}
                 return make_response(jsonify(response)), 400
@@ -84,7 +77,7 @@ class LoginView(MethodView):
     """
     def post(self):
         """
-        Handle POST request for this view. Url ---> /auth/login
+        POST request for user login
         """
         email = str(request.data.get('email', ''))
         password = str(request.data.get('password', ''))
@@ -117,6 +110,9 @@ class ResetView(MethodView):
     Generates password reset token
     """
     def post(self):
+        """
+        POST request for password reset token
+        """
         email = str(request.data.get('email', ''))
 
         if email:
@@ -150,13 +146,13 @@ class ResetView(MethodView):
         return make_response(jsonify(response)), 400
 
 
-class PasswordReset(MethodView):
+class PassReset(MethodView):
     """
     Handles password reset
     """
     def put(self, token):
         """
-        Handles password reset
+        POST request for password reset
         """
         # Retrieve email related to token
         reset_dets = PasswordReset.query.filter_by(token=token).first()
@@ -197,7 +193,7 @@ class PasswordReset(MethodView):
 registration_view = RegistrationView.as_view('register_view')
 login_view = LoginView.as_view('login_view')
 reset_token_view = ResetView.as_view('reset_token_view')
-pass_reset_view = PasswordReset.as_view('pass_reset_view')
+pass_reset_view = PassReset.as_view('pass_reset_view')
 
 # Define the rule for the registration url then add it to the blueprint
 auth_blueprint.add_url_rule(
@@ -206,8 +202,8 @@ auth_blueprint.add_url_rule(
     methods=['POST'])
 
 # Define the rule for the login url then add it to the blueprint
-auth_blueprint.add_url_rule('/auth/login',view_func=login_view,methods=['POST'])
+auth_blueprint.add_url_rule('/auth/login', view_func=login_view, methods=['POST'])
 
-auth_blueprint.add_url_rule('/auth/reset',view_func=reset_token_view,methods=['POST'])
+auth_blueprint.add_url_rule('/auth/reset', view_func=reset_token_view, methods=['POST'])
 
-auth_blueprint.add_url_rule('/auth/password/<token>',view_func=pass_reset_view,methods=['PUT'])
+auth_blueprint.add_url_rule('/auth/password/<token>', view_func=pass_reset_view, methods=['PUT'])

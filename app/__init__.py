@@ -3,13 +3,11 @@ Initialing the application
 """
 import re
 from functools import wraps
-from datetime import datetime, timedelta
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
 from flask import request, jsonify, make_response, current_app, redirect
 from sqlalchemy import func, or_, and_
 import jwt
-from flask_bcrypt import Bcrypt
 
 # Local import
 from instance.config import app_config
@@ -130,165 +128,6 @@ def create_app(config_name):
         Redirect user to api documentation
         """
         return redirect('http://docs.shoppinglistapi4.apiary.io')
-
-
-    # *********************************** User Operations ***********************************
-
-    @app.route('/users', methods=['GET'])
-    @token_required
-    def search_user(user_id):
-        """
-        Retrieves all registered users
-        """
-        search_query = request.args.get("q")
-
-        if search_query:
-            # if parameter q is specified
-            result = User.query.\
-                filter(User.username.ilike('%' + search_query + '%')).\
-                filter_by(admin=False).all()
-            output = []
-
-            if not result:
-                response = {'message': 'No users matching the criteria were found'}
-                return make_response(jsonify(response)), 404
-
-            for user in result:
-                if user.id == user_id:
-                    continue
-                else:
-                    obj = {
-                        'username': user.username,
-                        'date_created': user.date_created,
-                        'date_modified': user.date_modified
-                    }
-                    output.append(obj)
-
-            response = jsonify(output)
-            response.status_code = 200
-            return response
-
-    @app.route('/users/<u_id>', methods=['GET'])
-    @token_required
-    def get_profile(user_id, u_id):
-        """
-        Loads the user profile
-        """
-        try:
-            int(u_id)
-        except ValueError:
-            # An error occurred, therefore return a string message containing the error
-            response = {'message': 'The parameter provided should be an integer'}
-            return make_response(jsonify(response)), 401
-
-        user = User.query.filter_by(id=u_id).first()
-
-        if not user:
-            response = {'message': 'User does not exist'}
-            return make_response(jsonify(response)), 404
-
-        user = {
-            'username': user.username,
-            'date_created': user.date_created,
-            'date_modified': user.date_modified
-        }
-        response = jsonify(user)
-        response.status_code = 200
-        return response
-
-    @app.route('/users/<u_id>', methods=['PUT'])
-    @token_required
-    def update_profile(user_id, u_id):
-        """
-        Update user details
-        """
-        try:
-            int(u_id)
-        except ValueError:
-            # An error occurred, therefore return a string message containing the error
-            response = {'message': 'The parameter provided should be an integer'}
-            return make_response(jsonify(response)), 401
-
-        if str(user_id) != str(u_id):
-            response = {'message': 'You do not have permission to edit this profile'}
-            return make_response(jsonify(response)), 403
-
-        user = User.query.filter_by(id=user_id).first()
-
-        if request.method == 'PUT':
-            username = str(request.data.get('username', '')) if str(request.data.get('username', '')) \
-                else user.username
-            email = str(request.data.get('email', '')) if \
-                str(request.data.get('email', '')) else user.email
-            password = str(request.data.get('password', '')) if \
-                str(request.data.get('password', '')) else user.password
-
-            if username and email and password:
-                if not re.match("^[a-zA-Z0-9 _]*$", username):
-                    response = {
-                        'message': 'The username cannot contain special characters. '
-                                   'Only underscores'
-                    }
-                    return make_response(jsonify(response)), 400
-
-                email_resp = validate_email(email)
-                if not email_resp:
-                    response = {'message': 'The email is not valid'}
-                    return make_response(jsonify(response)), 400
-
-                if len(password) < 6:
-                    response = {
-                        'message': 'The password should be at least 6 characters long'
-                    }
-                    return make_response(jsonify(response)), 400
-
-                users = User.query.all()
-
-                for us in users:
-                    # Check if user exists
-                    if str(user.id) != str(us.id) and email.lower() == us.email.lower():
-                        response = {"message": "That user already exists"}
-                        return make_response(jsonify(response)), 401
-
-                # Update user
-                user.username = username
-                user.email = email
-                user.password = Bcrypt().generate_password_hash(password).decode()
-                user.save()
-
-                response = jsonify({
-                    'username': user.username,
-                    'email': user.email,
-                    'date_created': user.date_created,
-                    'date_modified': user.date_modified
-                })
-                response.status_code = 200
-                return response
-
-    @app.route('/users/<u_id>', methods=['DELETE'])
-    @token_required
-    def delete_profile(user_id, u_id):
-        """
-        Deletes a user profile
-        """
-        try:
-            int(u_id)
-        except ValueError:
-            # An error occurred, therefore return a string message containing the error
-            response = {'message': 'The parameter provided should be an integer'}
-            return make_response(jsonify(response)), 401
-
-        if str(user_id) != str(u_id):
-            response = {'message': 'You do not have permission to delete this profile'}
-            return make_response(jsonify(response)), 403
-
-        user = User.query.filter_by(id=user_id).first()
-
-        if request.method == 'DELETE':
-            user.delete()
-
-            response = {'message': 'Profile deleted successfully'}
-            return make_response(jsonify(response)), 200
 
     # ********************************** Admin Operations ***********************************
 
@@ -1382,8 +1221,10 @@ def create_app(config_name):
             response.status_code = 200
             return response
 
-    # import the authentication blueprint and register it on the app
+    # Import the blueprints and register them on the app
     from .auth import auth_blueprint
+    from .user import user_blueprint
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(user_blueprint)
 
     return app
