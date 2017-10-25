@@ -1,5 +1,5 @@
 """
-Views for the admin blueprint
+Views for the friend blueprint
 """
 from . import friend_blueprint
 

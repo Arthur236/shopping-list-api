@@ -1,5 +1,5 @@
 """
-Views for the admin blueprint
+Views for the shopping list blueprint
 """
 from . import shopping_list_blueprint
 

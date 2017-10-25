@@ -1,13 +1,9 @@
 """
 Initialing the application
 """
-import re
-from functools import wraps
 from flask_api import FlaskAPI
 from flask_sqlalchemy import SQLAlchemy
-from flask import request, jsonify, make_response, current_app, redirect
-from sqlalchemy import func, or_, and_
-import jwt
+from flask import request, jsonify, redirect
 
 # Local import
 from instance.config import app_config
@@ -99,232 +95,6 @@ def create_app(config_name):
         """
         return redirect('http://docs.shoppinglistapi4.apiary.io')
 
-    # ************************************ Share System *************************************
-
-    @app.route('/shopping_lists/share', methods=['GET', 'POST'])
-    @token_required
-    def shared_lists(user_id):
-        """
-        GET - Retrieves all shared lists
-        POST - Shares a list
-        """
-        if request.method == "POST":
-            try:
-                list_id = int(request.data.get('list_id', ''))
-                friend_id = int(request.data.get('friend_id', ''))
-            except ValueError:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameters provided should be integers'}
-                return make_response(jsonify(response)), 401
-
-            if list_id and friend_id:
-                # Check if the users are already friends
-                friend = Friend.query. \
-                    filter(or_((and_(Friend.user1 == user_id, Friend.user2 == friend_id)),
-                               (and_(Friend.user1 == friend_id, Friend.user2 == user_id))),
-                           Friend.accepted).first()
-
-                if friend:
-                    # The users are friends
-                    check_shared = SharedList.query.\
-                        filter_by(user1=user_id, user2=friend_id, list_id=list_id).first()
-                    if check_shared:
-                        response = {'message': 'That list has already been shared'}
-                        return make_response(jsonify(response)), 401
-
-                    shared_list = SharedList(list_id, user_id, friend_id)
-                    shared_list.save()
-
-                    response = {'message': 'Shopping list shared successfully'}
-                    return make_response(jsonify(response)), 200
-
-                response = {'message': 'Lists can only be shared to friends'}
-                return make_response(jsonify(response)), 401
-        else:
-            # GET
-            search_query = request.args.get("q")
-            try:
-                limit = int(request.args.get('limit', 10))
-                page = int(request.args.get('page', 1))
-            except ValueError:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameters provided should be integers'}
-                return make_response(jsonify(response)), 401
-
-            if search_query:
-                shared_lists = []
-                search_output = []
-                # Get lists that match criteria
-                result = ShoppingList.query. \
-                    filter(ShoppingList.name.ilike('%' + search_query + '%')).all()
-
-                if result:
-                    for res in result:
-                        # Get ids of lists that have been shared
-                        output = SharedList.query. \
-                            filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).\
-                            filter_by(list_id=res.id).first()
-                        if output:
-                            search_output.append(output)
-
-                if not search_output:
-                    response = {'message': 'You have no shopping lists that match that criteria'}
-                    return make_response(jsonify(response)), 404
-
-                for list_out in search_output:
-                    # Get names of lists that have been shared
-                    sha_list = ShoppingList.query.filter_by(id=list_out.list_id).first()
-                    obj = {
-                        'id': sha_list.id,
-                        'name': sha_list.name
-                    }
-                    shared_lists.append(obj)
-
-                response = jsonify(shared_lists)
-                response.status_code = 200
-                return response
-
-            shared_lists = []
-            shared_lists_ids = []
-            shared_list = SharedList.query.\
-                filter(or_(SharedList.user1 == user_id, SharedList.user2 == user_id)).all()
-
-            if not shared_list:
-                response = {'message': 'You have no shared lists'}
-                return make_response(jsonify(response)), 404
-
-            for s_list in shared_list:
-                shared_lists_ids.append(s_list.list_id)
-
-            paginated_lists = ShoppingList.query.filter(ShoppingList.id.in_(shared_lists_ids)).\
-                order_by(ShoppingList.name.asc()).paginate(page, limit)
-
-            for sha_list in paginated_lists.items:
-                obj = {
-                    'id': sha_list.id,
-                    'name': sha_list.name
-                }
-                shared_lists.append(obj)
-
-            response = jsonify(shared_lists)
-            response.status_code = 200
-            return response
-
-    @app.route('/shopping_lists/share/<list_id>', methods=['DELETE'])
-    @token_required
-    def stop_sharing(user_id, list_id):
-        """
-        Stops sharing a list
-        """
-        if request.method == "DELETE":
-            try:
-                int(list_id)
-                friend_id = int(request.data.get('friend_id', ''))
-            except Exception:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'Please ensure the parameter provided is correct'}
-                return make_response(jsonify(response)), 401
-
-            shopping_list = ShoppingList.query.filter_by(id=list_id).first()
-
-            if not shopping_list:
-                response = {'message': 'That list does not exist'}
-                return make_response(jsonify(response)), 404
-
-            if list_id and shopping_list:
-                shared_list = SharedList.query.\
-                    filter(or_(and_(SharedList.user1 == user_id, SharedList.user2 == friend_id),
-                           and_(SharedList.user1 == friend_id, SharedList.user2 == user_id))).\
-                    filter_by(list_id=list_id).first()
-
-                if shared_list:
-                    shared_list.delete()
-
-                    response = {'message': 'List sharing stopped successfully'}
-                    return make_response(jsonify(response)), 200
-
-                response = {'message': 'That list has not been shared'}
-                return make_response(jsonify(response)), 404
-
-    @app.route('/shopping_lists/share/<list_id>/items', methods=['GET'])
-    @token_required
-    def get_shared_list_items(user_id, list_id):
-        """
-        Retrieves all items in shared shopping list
-        """
-        try:
-            int(list_id)
-        except Exception:
-            # An error occurred, therefore return a string message containing the error
-            response = {'message': 'Please ensure the parameter provided is an integer'}
-            return make_response(jsonify(response)), 401
-
-        if request.method == "GET":
-            # Ensure that the list has been shared to that user
-            check_shared = SharedList.query.\
-                filter(and_(SharedList.list_id == list_id,
-                            or_(SharedList.user1 == user_id, SharedList.user2 == user_id))).first()
-
-            if not check_shared:
-                response = {'message': 'You do not have permission to view items on that list'}
-                return make_response(jsonify(response)), 403
-
-            search_query = request.args.get("q")
-            try:
-                limit = int(request.args.get('limit', 10))
-                page = int(request.args.get('page', 1))
-            except ValueError:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameters provided should be integers'}
-                return make_response(jsonify(response)), 401
-
-            if search_query:
-                # if parameter q is specified
-                shopping_list_items = ShoppingListItem.query. \
-                    filter(ShoppingListItem.name.ilike('%' + search_query + '%')). \
-                    filter_by(list_id=list_id).all()
-                output = []
-
-                if not shopping_list_items:
-                    response = {'message': 'The list has no items matching that criteria'}
-                    return make_response(jsonify(response)), 404
-
-                for list_item in shopping_list_items:
-                    obj = {
-                        'id': list_item.id,
-                        'name': list_item.name,
-                        'quantity': list_item.quantity,
-                        'unit_price': list_item.unit_price,
-                        'date_created': list_item.date_created,
-                        'date_modified': list_item.date_modified
-                    }
-                    output.append(obj)
-                response = jsonify(output)
-                response.status_code = 200
-                return response
-
-            paginated_items = ShoppingListItem.query.filter_by(list_id=list_id). \
-                order_by(ShoppingListItem.name.asc()).paginate(page, limit)
-            results = []
-
-            if not paginated_items.items:
-                response = {'message': 'That list has no items'}
-                return make_response(jsonify(response)), 404
-
-            for shopping_list_item in paginated_items.items:
-                obj = {
-                    'id': shopping_list_item.id,
-                    'name': shopping_list_item.name,
-                    'quantity': shopping_list_item.quantity,
-                    'unit_price': shopping_list_item.unit_price,
-                    'date_created': shopping_list_item.date_created,
-                    'date_modified': shopping_list_item.date_modified
-                }
-                results.append(obj)
-            response = jsonify(results)
-            response.status_code = 200
-            return response
-
     # Import the blueprints and register them on the app
     from .auth import auth_blueprint
     from .user import user_blueprint
@@ -332,11 +102,13 @@ def create_app(config_name):
     from .shopping_list import shopping_list_blueprint
     from .item import item_blueprint
     from .friend import friend_blueprint
+    from .share import share_blueprint
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(user_blueprint)
     app.register_blueprint(admin_blueprint)
     app.register_blueprint(shopping_list_blueprint)
     app.register_blueprint(item_blueprint)
     app.register_blueprint(friend_blueprint)
+    app.register_blueprint(share_blueprint)
 
     return app

@@ -1,5 +1,5 @@
 """
-Views for the admin blueprint
+Views for the item blueprint
 """
 from . import item_blueprint
 
@@ -78,7 +78,7 @@ class ItemOps(MethodView):
                     })
                     response.status_code = 201
                     return response
-    
+
                 response = {'message': 'That item already exists.'}
                 return make_response(jsonify(response)), 401
 
