@@ -6,12 +6,12 @@ from . import auth_blueprint
 import re
 from flask.views import MethodView
 from datetime import datetime, timedelta
-from flask import request, jsonify, make_response, current_app, redirect
-from sqlalchemy import func, or_, and_
+from flask import request, jsonify, make_response, current_app
+from sqlalchemy import func
 import jwt
 from flask_bcrypt import Bcrypt
-from app.models import User, PasswordReset
-from app.decorators import MyDecorator
+from ..models import User, PasswordReset
+from ..decorators import MyDecorator
 md = MyDecorator()
 
 
