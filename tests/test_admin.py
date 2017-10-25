@@ -79,6 +79,8 @@ class AuthTestCase(TestCase):
 
         # Get all the users by making a GET request
         res = self.client.get('/v1/admin/users', headers={'x-access-token': access_token})
+        # Make sure admin is not in list
+        self.assertNotIn('admin', str(res.data))
         self.assertEqual(res.status_code, 200)
 
     def test_get_users_without_rights(self):
@@ -129,6 +131,7 @@ class AuthTestCase(TestCase):
 
         res = self.client.get('/v1/admin/users?page=1&limit=2',
                               headers={'x-access-token': access_token})
+        self.assertNotIn('admin', str(res.data))
         self.assertEqual(res.status_code, 200)
 
     def test_get_user_by_id(self):
@@ -239,7 +242,7 @@ class AuthTestCase(TestCase):
         """
         Test if token is correct format
         """
-        res = self.client.get('/v1/admin/users/2', headers={'x-access-token': 'wrong_token'})
+        res = self.client.delete('/v1/admin/users/2', headers={'x-access-token': 'wrong_token'})
         self.assertEqual(res.status_code, 401)
 
     def test_delete_user_token_present(self):
