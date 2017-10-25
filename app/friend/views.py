@@ -294,7 +294,7 @@ class FRequest(MethodView):
 
 friend_ops = FriendOps.as_view('friend_ops')
 friend_man = FriendMan.as_view('friend_man')
-request_op = FriendMan.as_view('request_op')
+request_op = FRequest.as_view('request_op')
 
 # Define rules
 friend_blueprint.add_url_rule('/friends',

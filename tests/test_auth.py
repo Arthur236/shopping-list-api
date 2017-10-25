@@ -1,23 +1,24 @@
 """
 Tests for authentication
 """
-import unittest
+from flask_testing import TestCase
 import json
 from app import create_app, db
 
 
-class AuthTestCase(unittest.TestCase):
+class AuthTestCase(TestCase):
     """
     Tests for handling registration, login and token generation
     """
+
+    def create_app(self):
+        app = create_app(config_name="testing")
+        return app
 
     def setUp(self):
         """
         Set up test variables
         """
-        self.app = create_app(config_name="testing")
-        # Initialize the test client
-        self.client = self.app.test_client
         # This is the user test json data with a predefined username and password
         self.user1 = {
             'username': 'User1',
@@ -34,51 +35,54 @@ class AuthTestCase(unittest.TestCase):
             'password': 'admin123'
         }
 
-        with self.app.app_context():
-            # Create all tables
-            db.session.close()
-            db.drop_all()
-            db.create_all()
+        db.create_all()
+
+    def tearDown(self):
+        """
+        Delete all initialized variables
+        """
+        db.session.remove()
+        db.drop_all()
 
     def test_username_is_valid(self):
         """
         Test username cannot have special characters
         """
-        res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test*/-', 'email': 'test@gmail.com',
-                                       'password': 'password'})
+        res = self.client.post('/v1/auth/register',
+                               data={'username': 'test*/-', 'email': 'test@gmail.com',
+                                     'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
     def test_password_length(self):
         """
         Test password length
         """
-        res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test', 'email': 'test@gmail.com',
-                                       'password': 'pass'})
+        res = self.client.post('/v1/auth/register',
+                               data={'username': 'test', 'email': 'test@gmail.com',
+                                     'password': 'pass'})
         self.assertEqual(res.status_code, 400)
 
     def test_email_is_valid(self):
         """
         Test email is correct format
         """
-        res = self.client().post('/v1/auth/register',
-                                 data={'username': 'test', 'email': 'test.com',
-                                       'password': 'password'})
+        res = self.client.post('/v1/auth/register',
+                               data={'username': 'test', 'email': 'test.com',
+                                     'password': 'password'})
         self.assertEqual(res.status_code, 400)
 
     def test_registration(self):
         """
         Test user registration works correctly
         """
-        res = self.client().post('/v1/auth/register', data=self.user1)
+        res = self.client.post('/v1/auth/register', data=self.user1)
         self.assertEqual(res.status_code, 201)
 
     def create_user(self, user):
         """
         Helper function to create users
         """
-        res = self.client().post('/v1/auth/register', data=user)
+        res = self.client.post('/v1/auth/register', data=user)
 
         return res
 
@@ -94,7 +98,7 @@ class AuthTestCase(unittest.TestCase):
         """
         Test if all parameters are provided
         """
-        res = self.client().post('/v1/auth/register')
+        res = self.client.post('/v1/auth/register')
         self.assertEqual(res.status_code, 400)
 
     def test_user_login(self):
@@ -102,7 +106,7 @@ class AuthTestCase(unittest.TestCase):
         Test registered user can login
         """
         self.create_user(self.user1)
-        login_res = self.client().post('/v1/auth/login', data=self.user1)
+        login_res = self.client.post('/v1/auth/login', data=self.user1)
 
         # Get the results in json format
         result = json.loads(login_res.data.decode())
@@ -115,7 +119,7 @@ class AuthTestCase(unittest.TestCase):
         Helper function to log in users
         """
         self.create_user(user)
-        login_res = self.client().post('/v1/auth/login', data=user)
+        login_res = self.client.post('/v1/auth/login', data=user)
         access_token = json.loads(login_res.data.decode())['access-token']
 
         return access_token
@@ -125,7 +129,7 @@ class AuthTestCase(unittest.TestCase):
         Test if all login parameters are provided
         """
         self.create_user(self.user1)
-        login_res = self.client().post('/v1/auth/login')
+        login_res = self.client.post('/v1/auth/login')
         self.assertEqual(login_res.status_code, 400)
 
     def test_wrong_password(self):
@@ -133,9 +137,9 @@ class AuthTestCase(unittest.TestCase):
         Test whether a registered user can login with wrong password
         """
         self.create_user(self.user1)
-        login_res = self.client().post('/v1/auth/login',
-                                       data={'email': 'user1@gmail.com',
-                                             'password': 'passwordssss'})
+        login_res = self.client.post('/v1/auth/login',
+                                     data={'email': 'user1@gmail.com',
+                                           'password': 'passwordssss'})
 
         # Assert that the status code
         self.assertEqual(login_res.status_code, 401)
@@ -151,7 +155,7 @@ class AuthTestCase(unittest.TestCase):
             'password': 'nope'
         }
         # Send a POST request to /v1/auth/login with the data above
-        res = self.client().post('/v1/auth/login', data=not_a_user)
+        res = self.client.post('/v1/auth/login', data=not_a_user)
 
         # Assert that this response must contain an error message
         # and an error status code 401(Unauthorized)
@@ -163,7 +167,7 @@ class AuthTestCase(unittest.TestCase):
         """
         self.create_user(self.user1)
 
-        res = self.client().post('/v1/auth/reset', data={'email': 'jwhe89@gmail.com'})
+        res = self.client.post('/v1/auth/reset', data={'email': 'jwhe89@gmail.com'})
         self.assertEqual(res.status_code, 401)
 
     def test_pass_reset_email_parameter(self):
@@ -172,7 +176,7 @@ class AuthTestCase(unittest.TestCase):
         """
         self.create_user(self.user1)
 
-        res = self.client().post('/v1/auth/reset')
+        res = self.client.post('/v1/auth/reset')
         self.assertEqual(res.status_code, 400)
 
     def test_password_reset_token(self):
@@ -183,7 +187,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
 
         # Get password reset token
-        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         self.assertEqual(res.status_code, 200)
 
     def test_password_reset(self):
@@ -193,16 +197,16 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
 
         # Get password reset token
-        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'],
-                                      data={'password': 'pass123'})
+        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'],
+                                    data={'password': 'pass123'})
         self.assertEqual(reset_res.status_code, 201)
 
         # Ensure you can log in with changed password
-        login_res = self.client().post('/v1/auth/login',
-                                       data={'email': 'user1@gmail.com', 'password': 'pass123'})
+        login_res = self.client.post('/v1/auth/login',
+                                     data={'email': 'user1@gmail.com', 'password': 'pass123'})
 
         # Get the results in json format
         result = json.loads(login_res.data.decode())
@@ -216,8 +220,8 @@ class AuthTestCase(unittest.TestCase):
         """
         self.create_user(self.user1)
 
-        reset_res = self.client().put('/v1/auth/password/wrong_token',
-                                      data={'password': 'pass123'})
+        reset_res = self.client.put('/v1/auth/password/wrong_token',
+                                    data={'password': 'pass123'})
         self.assertEqual(reset_res.status_code, 400)
 
     def test_short_reset_password(self):
@@ -227,11 +231,11 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
 
         # Get password reset token
-        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'],
-                                      data={'password': 'pass'})
+        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'],
+                                    data={'password': 'pass'})
         self.assertEqual(reset_res.status_code, 400)
 
     def test_reset_params(self):
@@ -241,10 +245,10 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
 
         # Get password reset token
-        res = self.client().post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
+        res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client().put('/v1/auth/password/' + token['pass-reset-token'])
+        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'])
         self.assertEqual(reset_res.status_code, 400)
 
     def test_get_profile_id_format(self):
@@ -256,7 +260,7 @@ class AuthTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         # Get the user profile
-        res = self.client().get('/v1/users/two', headers={'x-access-token': access_token})
+        res = self.client.get('/v1/users/two', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
     def test_get_profile(self):
@@ -268,8 +272,26 @@ class AuthTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         # Get the user profile
-        res = self.client().get('/v1/users/2', headers={'x-access-token': access_token})
+        res = self.client.get('/v1/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
+
+    def test_get_profile_token_correct(self):
+        """
+        Test whether token is correct
+        """
+        self.create_user(self.user1)
+
+        res = self.client.get('/v1/users/2', headers={'x-access-token': 'wrong_token'})
+        self.assertEqual(res.status_code, 401)
+
+    def test_get_profile_token_present(self):
+        """
+        Test whether token is present
+        """
+        self.create_user(self.user1)
+
+        res = self.client.get('/v1/users/2')
+        self.assertEqual(res.status_code, 401)
 
     def test_non_existent_user_profile(self):
         """
@@ -278,7 +300,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().get('/v1/users/26', headers={'x-access-token': access_token})
+        res = self.client.get('/v1/users/26', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
     def test_up_another_user_profile(self):
@@ -290,12 +312,12 @@ class AuthTestCase(unittest.TestCase):
         access_token = self.login_user(self.user1)
 
         # Try to update another user's profile
-        res = self.client().put('/v1/users/3', headers={'x-access-token': access_token},
-                                data={
-                                    'username': 'test_user',
-                                    'email': 'test_email',
-                                    'password': 'password'
-                                })
+        res = self.client.put('/v1/users/3', headers={'x-access-token': access_token},
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email',
+                                  'password': 'password'
+                              })
         self.assertEqual(res.status_code, 403)
 
     def test_sp_chars_profile_update(self):
@@ -305,12 +327,12 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
-                                data={
-                                    'username': 'test_user*-/',
-                                    'email': 'test_email@gmail.com',
-                                    'password': 'password'
-                                })
+        res = self.client.put('/v1/users/2', headers={'x-access-token': access_token},
+                              data={
+                                  'username': 'test_user*-/',
+                                  'email': 'test_email@gmail.com',
+                                  'password': 'password'
+                              })
         self.assertEqual(res.status_code, 400)
 
     def test_invalid_email_prof_up(self):
@@ -320,12 +342,12 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
-                                data={
-                                    'username': 'test_user',
-                                    'email': 'test_email.com',
-                                    'password': 'password'
-                                })
+        res = self.client.put('/v1/users/2', headers={'x-access-token': access_token},
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email.com',
+                                  'password': 'password'
+                              })
         self.assertEqual(res.status_code, 400)
 
     def test_short_pass_profile_update(self):
@@ -335,12 +357,12 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
-                                data={
-                                    'username': 'test_user',
-                                    'email': 'test_email@gmail.com',
-                                    'password': 'pass'
-                                })
+        res = self.client.put('/v1/users/2', headers={'x-access-token': access_token},
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email@gmail.com',
+                                  'password': 'pass'
+                              })
         self.assertEqual(res.status_code, 400)
 
     def test_email_exists_up_prof(self):
@@ -351,8 +373,8 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user2)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
-                                data=self.user2)
+        res = self.client.put('/v1/users/2', headers={'x-access-token': access_token},
+                              data=self.user2)
         self.assertEqual(res.status_code, 401)
 
     def test_profile_edit_id_format(self):
@@ -362,8 +384,8 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/two', headers={'x-access-token': access_token},
-                                data=self.user1)
+        res = self.client.put('/v1/users/two', headers={'x-access-token': access_token},
+                              data=self.user1)
         self.assertEqual(res.status_code, 401)
 
     def test_update_profile(self):
@@ -373,13 +395,41 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().put('/v1/users/2', headers={'x-access-token': access_token},
-                                data={
-                                    'username': 'test_user',
-                                    'email': 'test_email@gmail.com',
-                                    'password': 'password'
-                                })
+        res = self.client.put('/v1/users/2', headers={'x-access-token': access_token},
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email@gmail.com',
+                                  'password': 'password'
+                              })
         self.assertEqual(res.status_code, 200)
+
+    def test_update_profile_token_correct(self):
+        """
+        Test whether token is correct
+        """
+        self.create_user(self.user1)
+
+        res = self.client.put('/v1/users/2', headers={'x-access-token': 'wrong_token'},
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email@gmail.com',
+                                  'password': 'password'
+                              })
+        self.assertEqual(res.status_code, 401)
+
+    def test_update_profile_token_present(self):
+        """
+        Test whether token is present
+        """
+        self.create_user(self.user1)
+
+        res = self.client.put('/v1/users/2',
+                              data={
+                                  'username': 'test_user',
+                                  'email': 'test_email@gmail.com',
+                                  'password': 'password'
+                              })
+        self.assertEqual(res.status_code, 401)
 
     def test_del_diff_user_prof(self):
         """
@@ -388,7 +438,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().delete('/v1/users/3', headers={'x-access-token': access_token})
+        res = self.client.delete('/v1/users/3', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
 
     def test_search_non_existent_user(self):
@@ -398,7 +448,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().get('/v1/users?q=70g', headers={'x-access-token': access_token})
+        res = self.client.get('/v1/users?q=70g', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 404)
 
     def test_search_existent_user(self):
@@ -408,7 +458,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().get('/v1/users?q=us', headers={'x-access-token': access_token})
+        res = self.client.get('/v1/users?q=us', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
     def test_delete_profile_id_format(self):
@@ -418,7 +468,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().delete('/v1/users/two', headers={'x-access-token': access_token})
+        res = self.client.delete('/v1/users/two', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 401)
 
     def test_delete_profile(self):
@@ -428,18 +478,23 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().delete('/v1/users/2', headers={'x-access-token': access_token})
+        res = self.client.delete('/v1/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
-    def tearDown(self):
+    def test_delete_profile_token_correct(self):
         """
-        Delete all initialized variables
+        Test whether token is correct
         """
-        with self.app.app_context():
-            # Drop all tables
-            db.session.remove()
-            db.drop_all()
+        self.create_user(self.user1)
 
-    # Make the tests conveniently executable
-    if __name__ == "__main__":
-        unittest.main()
+        res = self.client.delete('/v1/users/2', headers={'x-access-token': 'wrong_token'})
+        self.assertEqual(res.status_code, 401)
+
+    def test_delete_profile_token_present(self):
+        """
+        Test whether token is present
+        """
+        self.create_user(self.user1)
+
+        res = self.client.delete('/v1/users/2')
+        self.assertEqual(res.status_code, 401)

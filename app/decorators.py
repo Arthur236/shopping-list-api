@@ -3,7 +3,7 @@ Custom decorator functions
 """
 import re
 import jwt
-from flask import request, jsonify, current_app
+from flask import request, current_app
 from app.models import User
 
 
@@ -12,20 +12,23 @@ class MyDecorator(object):
     Class to hold decorator methods
     """
     def check_token(self):
-        auth_token = request.headers.get('x-access-token')
+        token = None
 
-        if not auth_token:
+        # Check if header token exists
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+
+        if not token:
             return 'Missing'
 
-        if auth_token:
-            try:
-                data = jwt.decode(auth_token, current_app.config.get('SECRET'))
-                current_user = User.query.filter_by(id=data['id']).first()
-                user_id = current_user.id
-                return user_id
+        try:
+            data = jwt.decode(token, current_app.config.get('SECRET'))
+            current_user = User.query.filter_by(id=data['id']).first()
+            user_id = current_user.id
+            return user_id
 
-            except Exception:
-                return 'Invalid'
+        except Exception:
+            return 'Invalid'
 
     def validate_email(self, email):
         """
