@@ -2,7 +2,6 @@
 Custom decorator functions
 """
 import re
-from functools import wraps
 import jwt
 from flask import request, jsonify, current_app
 from app.models import User
@@ -12,36 +11,21 @@ class MyDecorator(object):
     """
     Class to hold decorator methods
     """
-    def token_required(self, f):
-        """
-        Token decorator method
-        """
+    def check_token(self):
+        auth_token = request.headers.get('x-access-token')
 
-        @wraps(f)
-        def decorated(*args, **kwargs):
-            """
-            Check if token exists
-            """
-            token = None
+        if not auth_token:
+            return 'Missing'
 
-            # Check if header token exists
-            if 'x-access-token' in request.headers:
-                token = request.headers['x-access-token']
-
-            if not token:
-                return jsonify({'message': 'Token is missing!'}), 401
-
+        if auth_token:
             try:
-                data = jwt.decode(token, current_app.config.get('SECRET'))
+                data = jwt.decode(auth_token, current_app.config.get('SECRET'))
                 current_user = User.query.filter_by(id=data['id']).first()
                 user_id = current_user.id
+                return user_id
+
             except Exception:
-                return jsonify({'message': 'Token is invalid!'}), 401
-
-            # Pass user object to the route
-            return f(user_id, *args, **kwargs)
-
-        return decorated
+                return 'Invalid'
 
     def validate_email(self, email):
         """
