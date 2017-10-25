@@ -4,6 +4,7 @@ Tests for authentication
 import unittest
 import json
 from app import create_app, db
+from app.models import User
 
 
 class AuthTestCase(unittest.TestCase):
@@ -76,7 +77,7 @@ class AuthTestCase(unittest.TestCase):
 
     def create_user(self, user):
         """
-        Helper function for user login
+        Helper function to create users
         """
         res = self.client().post('/v1/auth/register', data=user)
 
@@ -428,7 +429,7 @@ class AuthTestCase(unittest.TestCase):
         self.create_user(self.user1)
         access_token = self.login_user(self.user1)
 
-        res = self.client().delete('/v1/users/2', headers={'x-access-token': access_token})
+        res = self.client().delete('/v1/users/3', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 200)
 
     def tearDown(self):

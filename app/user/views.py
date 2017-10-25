@@ -177,6 +177,5 @@ user_profile_view = UserProfile.as_view('user_profile_view')
 
 # Define rules
 user_blueprint.add_url_rule('/users', view_func=search_user_view, methods=['GET'])
-user_blueprint.add_url_rule('/users/<u_id>', view_func=user_profile_view, methods=['GET'])
-user_blueprint.add_url_rule('/users/<u_id>', view_func=user_profile_view, methods=['PUT'])
-user_blueprint.add_url_rule('/users/<u_id>', view_func=user_profile_view, methods=['DELETE'])
+user_blueprint.add_url_rule('/users/<u_id>', view_func=user_profile_view,
+                            methods=['GET', 'PUT', 'DELETE'])
