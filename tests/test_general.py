@@ -38,5 +38,5 @@ class GeneralTestCase(TestCase):
         """
         Test whether home redirects correctly
         """
-        res = self.client.get('/v1')
-        self.assertEqual(res.status_code, 301)
+        res = self.client.get('/v1/')
+        self.assertEqual(res.status_code, 302)
