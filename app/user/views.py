@@ -93,7 +93,7 @@ class UserProfile(MethodView):
             response.status_code = 200
             return response
 
-    def put(self, user_id, u_id):
+    def put(self, u_id):
         """
         Updates user profile
         """
@@ -166,7 +166,7 @@ class UserProfile(MethodView):
                 response.status_code = 200
                 return response
 
-    def delete(self, user_id, u_id):
+    def delete(self, u_id):
         """
         Deletes a user profile
         """

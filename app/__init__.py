@@ -51,13 +51,13 @@ def create_app(config_name):
         """
         Add admin user when tables are migrated
         """
-        user = User.query.all()
-        if not user:
+        admin_user = User.query.all()
+        if not admin_user:
             db.session.add(User(username='admin', email='admin@gmail.com', password='admin123'))
             db.session.commit()
-            user = User.query.filter_by(email='admin@gmail.com').first()
-            user.admin = True
-            user.save()
+            admin_user = User.query.filter_by(email='admin@gmail.com').first()
+            admin_user.admin = True
+            admin_user.save()
 
     @app.errorhandler(404)
     def error_404(error):
