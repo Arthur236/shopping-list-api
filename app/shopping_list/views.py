@@ -21,6 +21,7 @@ class SListOps(MethodView):
         Creates shopping lists
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -68,6 +69,7 @@ class SListOps(MethodView):
         Retrieves shopping lists
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -137,6 +139,7 @@ class SListMan(MethodView):
         Retrieves a specific shopping list
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -172,6 +175,7 @@ class SListMan(MethodView):
         Updates a specific shopping list
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -233,6 +237,7 @@ class SListMan(MethodView):
         Deletes a specific shopping list
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':

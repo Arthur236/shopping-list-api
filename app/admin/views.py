@@ -20,6 +20,7 @@ class GetAllUsers(MethodView):
         Retrieves all registered users
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -104,6 +105,7 @@ class GetUser(MethodView):
         Retrieves a specific user
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -144,6 +146,7 @@ class GetUser(MethodView):
         Deletes a specific user
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':

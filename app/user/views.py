@@ -21,6 +21,7 @@ class SearchUser(MethodView):
         GET request to search users
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -64,6 +65,7 @@ class UserProfile(MethodView):
         Loads user profile
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -96,6 +98,7 @@ class UserProfile(MethodView):
         Updates user profile
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
@@ -168,6 +171,7 @@ class UserProfile(MethodView):
         Deletes a user profile
         """
         user_id = md.check_token()
+
         if user_id == 'Missing':
             return jsonify({'message': 'Token is missing!'}), 401
         elif user_id == 'Invalid':
