@@ -12,6 +12,9 @@ class AuthTestCase(TestCase):
     """
 
     def create_app(self):
+        """
+        Instantiate app instance
+        """
         app = create_app(config_name="testing")
         return app
 
