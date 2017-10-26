@@ -1,26 +1,25 @@
 """
 Views for the auth blueprint
 """
-from . import auth_blueprint
-
 import re
-from flask.views import MethodView
 from datetime import datetime, timedelta
+from flask.views import MethodView
 from flask import request, jsonify, make_response, current_app
 from sqlalchemy import func
 import jwt
 from flask_bcrypt import Bcrypt
+from . import auth_blueprint
 from ..models import User, PasswordReset
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class RegistrationView(MethodView):
     """
     Handles user registration
     """
-
-    def post(self):
+    @staticmethod
+    def post():
         """
         POST request for user registration
         """
@@ -29,7 +28,7 @@ class RegistrationView(MethodView):
         password = str(request.data.get('password', ''))
 
         if email and password and username:
-            email_resp = md.validate_email(email)
+            email_resp = my_dec.validate_email(email)
             if not email_resp:
                 response = {'message': 'The email is not valid'}
                 return make_response(jsonify(response)), 400
@@ -75,7 +74,8 @@ class LoginView(MethodView):
     """
     Handles user log in
     """
-    def post(self):
+    @staticmethod
+    def post():
         """
         POST request for user login
         """
@@ -109,7 +109,8 @@ class ResetView(MethodView):
     """
     Generates password reset token
     """
-    def post(self):
+    @staticmethod
+    def post():
         """
         POST request for password reset token
         """
@@ -150,7 +151,8 @@ class PassReset(MethodView):
     """
     Handles password reset
     """
-    def put(self, token):
+    @staticmethod
+    def put(token):
         """
         POST request for password reset
         """
@@ -190,10 +192,10 @@ class PassReset(MethodView):
             return make_response(jsonify(response)), 400
 
 
-registration_view = RegistrationView.as_view('register_view')
-login_view = LoginView.as_view('login_view')
-reset_token_view = ResetView.as_view('reset_token_view')
-pass_reset_view = PassReset.as_view('pass_reset_view')
+registration_view = RegistrationView.as_view('register_view')  # pylint: disable=invalid-name
+login_view = LoginView.as_view('login_view')  # pylint: disable=invalid-name
+reset_token_view = ResetView.as_view('reset_token_view')  # pylint: disable=invalid-name
+pass_reset_view = PassReset.as_view('pass_reset_view')  # pylint: disable=invalid-name
 
 # Define the rule for the registration url then add it to the blueprint
 auth_blueprint.add_url_rule(

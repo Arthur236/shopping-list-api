@@ -11,7 +11,11 @@ class MyDecorator(object):
     """
     Class to hold decorator methods
     """
-    def check_token(self):
+    @staticmethod
+    def check_token():
+        """
+        Helper function to check access token header
+        """
         token = None
 
         # Check if header token exists
@@ -27,14 +31,17 @@ class MyDecorator(object):
             user_id = current_user.id
             return user_id
 
-        except Exception:
+        except (jwt.InvalidTokenError, jwt.ExpiredSignatureError):
             return 'Invalid'
 
-    def validate_email(self, email):
+    @staticmethod
+    def validate_email(email):
         """
         Helper function to validate email
         """
-        if re.match("^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$", email):
+        email_exp = r"(^[_a-z0-9-]+(\.[_a-z0-9-]+)*@[a-z0-9-]+(\.[a-z0-9-]+)*(\.[a-z]{2,4})$)"
+
+        if re.match(email_exp, email):
             return True
 
         return False

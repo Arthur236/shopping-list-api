@@ -9,7 +9,7 @@ class GeneralTestCase(TestCase):
     """
     General tests
     """
-    
+
     def create_app(self):
         app = create_app(config_name="testing")
         return app
@@ -19,7 +19,7 @@ class GeneralTestCase(TestCase):
         Set up test variables
         """
         db.create_all()
-        
+
     def tearDown(self):
         """
         Delete all initialized variables

@@ -136,7 +136,7 @@ function-name-hint=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 function-rgx=(([a-z][a-z0-9_]{2,30})|(_[a-z0-9_]*))$
 
 # Good variable names which should always be accepted, separated by a comma
-good-names=i,j,k,ex,Run,_,app,f,e,db,id,rv,migrate,manager,config_name,port,app_config
+good-names=i,j,k,ex,Run,_,app,f,e,db,id,rv,migrate,manager,config_name,port,app_config,my_dec
 
 # Include a hint for the correct naming format with invalid-name
 include-naming-hint=no
@@ -236,10 +236,10 @@ ignore-comments=yes
 ignore-docstrings=yes
 
 # Ignore imports when computing similarities.
-ignore-imports=no
+ignore-imports=yes
 
 # Minimum lines number of a similarity.
-min-similarity-lines=4
+min-similarity-lines=50
 
 
 [SPELLING]
@@ -364,10 +364,10 @@ max-attributes=8
 max-bool-expr=5
 
 # Maximum number of branch for function / method body
-max-branches=12
+max-branches=15
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=20
 
 # Maximum number of parents for a class (see R0901).
 max-parents=7
@@ -382,7 +382,7 @@ max-returns=10
 max-statements=50
 
 # Minimum number of public methods for a class (see R0903).
-min-public-methods=2
+min-public-methods=0
 
 
 [IMPORTS]

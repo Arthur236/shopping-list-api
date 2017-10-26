@@ -1,35 +1,35 @@
 """
 Views for the share blueprint
 """
-from . import share_blueprint
-
 from flask.views import MethodView
 from flask import request, jsonify, make_response
 from sqlalchemy import and_, or_
+from . import share_blueprint
 from ..models import Friend, SharedList, ShoppingList, ShoppingListItem
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class ShareOps(MethodView):
     """
     Handles sharing and retrieving shared lists
     """
-    def post(self):
+    @staticmethod
+    def post():
         """
         POST - Shares a list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 list_id = int(request.data.get('list_id', ''))
                 friend_id = int(request.data.get('friend_id', ''))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -58,22 +58,23 @@ class ShareOps(MethodView):
                 response = {'message': 'Lists can only be shared to friends'}
                 return make_response(jsonify(response)), 401
 
-    def get(self):
+    @staticmethod
+    def get():
         """
         GET - Retrieves all shared lists
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -142,21 +143,22 @@ class ShareMan(MethodView):
     """
     Handles shared list operations
     """
-    def delete(self, list_id):
+    @staticmethod
+    def delete(list_id):
         """
         Stops sharing a list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
                 friend_id = int(request.data.get('friend_id', ''))
-            except Exception:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'Please ensure the parameter provided is correct'}
                 return make_response(jsonify(response)), 401
@@ -170,8 +172,8 @@ class ShareMan(MethodView):
             if list_id and shopping_list:
                 shared_list = SharedList.query.\
                     filter(or_(and_(SharedList.user1 == user_id, SharedList.user2 == friend_id),
-                           and_(SharedList.user1 == friend_id, SharedList.user2 == user_id))).\
-                    filter_by(list_id=list_id).first()
+                               and_(SharedList.user1 == friend_id, SharedList.user2 == user_id)))\
+                    .filter_by(list_id=list_id).first()
 
                 if shared_list:
                     shared_list.delete()
@@ -187,20 +189,21 @@ class ShareItems(MethodView):
     """
     Shows items in a shared list
     """
-    def get(self, list_id):
+    @staticmethod
+    def get(list_id):
         """
         Retrieves all items in shared shopping list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
-            except Exception:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'Please ensure the parameter provided is an integer'}
                 return make_response(jsonify(response)), 401
@@ -218,7 +221,7 @@ class ShareItems(MethodView):
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -271,9 +274,9 @@ class ShareItems(MethodView):
             return response
 
 
-share_ops = ShareOps.as_view('share_ops')
-share_man = ShareMan.as_view('share_man')
-share_items_ops = ShareItems.as_view('share_items_ops')
+share_ops = ShareOps.as_view('share_ops')  # pylint: disable=invalid-name
+share_man = ShareMan.as_view('share_man')  # pylint: disable=invalid-name
+share_items_ops = ShareItems.as_view('share_items_ops')  # pylint: disable=invalid-name
 
 # Define rules
 share_blueprint.add_url_rule('/shopping_lists/share',

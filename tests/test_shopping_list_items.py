@@ -1,8 +1,8 @@
 """
 Test cases for shopping list items
 """
-from flask_testing import TestCase
 import json
+from flask_testing import TestCase
 from app import create_app, db
 
 

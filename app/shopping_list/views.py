@@ -1,31 +1,31 @@
 """
 Views for the shopping list blueprint
 """
-from . import shopping_list_blueprint
-
 import re
 from flask.views import MethodView
 from flask import request, jsonify, make_response
 from sqlalchemy import func
+from . import shopping_list_blueprint
 from ..models import ShoppingList
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class SListOps(MethodView):
     """
     Handles shopping list creation and retrieval
     """
-    def post(self):
+    @staticmethod
+    def post():
         """
         Creates shopping lists
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             name = str(request.data.get('name', ''))
             description = str(request.data.get('description', ''))
@@ -64,22 +64,23 @@ class SListOps(MethodView):
             response = {'message': 'Shopping list name not provided.'}
             return make_response(jsonify(response)), 400
 
-    def get(self):
+    @staticmethod
+    def get():
         """
         Retrieves shopping lists
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -134,20 +135,21 @@ class SListMan(MethodView):
     """
     Handles shopping list manipulation operations
     """
-    def get(self, list_id):
+    @staticmethod
+    def get(list_id):
         """
         Retrieves a specific shopping list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -170,20 +172,21 @@ class SListMan(MethodView):
                 response.status_code = 200
                 return response
 
-    def put(self, list_id):
+    @staticmethod
+    def put(list_id):
         """
         Updates a specific shopping list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -208,11 +211,11 @@ class SListMan(MethodView):
                     }
                     return make_response(jsonify(response)), 400
 
-                s_list = ShoppingList.query.filter_by(user_id=user_id).all()
+                s_lists = ShoppingList.query.filter_by(user_id=user_id).all()
 
-                for sl in s_list:
+                for s_list in s_lists:
                     # Check if name exists
-                    if str(list_id) != str(sl.id) and name.lower() == sl.name.lower():
+                    if str(list_id) != str(s_list.id) and name.lower() == s_list.name.lower():
                         response = {"message": "Shopping list already exists"}
                         return make_response(jsonify(response)), 401
 
@@ -232,20 +235,21 @@ class SListMan(MethodView):
                     response.status_code = 200
                     return response
 
-    def delete(self, list_id):
+    @staticmethod
+    def delete(list_id):
         """
         Deletes a specific shopping list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -267,8 +271,8 @@ class SListMan(MethodView):
                 return make_response(jsonify(response)), 200
 
 
-s_list_ops = SListOps.as_view('s_list_ops')
-s_list_man = SListMan.as_view('s_list_man')
+s_list_ops = SListOps.as_view('s_list_ops')  # pylint: disable=invalid-name
+s_list_man = SListMan.as_view('s_list_man')  # pylint: disable=invalid-name
 
 
 # Define rules

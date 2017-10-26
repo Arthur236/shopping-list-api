@@ -1,35 +1,35 @@
 """
 Views for the item blueprint
 """
-from . import item_blueprint
-
 import re
 from flask.views import MethodView
 from flask import request, jsonify, make_response
 from sqlalchemy import func
+from . import item_blueprint
 from ..models import ShoppingList, ShoppingListItem
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class ItemOps(MethodView):
     """
     Handles shopping list item creation and retrieval
     """
-    def post(self, list_id):
+    @staticmethod
+    def post(list_id):
         """
         POST - Creates a shopping list item
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -44,7 +44,7 @@ class ItemOps(MethodView):
                 name = str(request.data.get('name', ''))
                 quantity = float(request.data.get('quantity', 0.0))
                 unit_price = float(request.data.get('unit_price', 0.0))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be strings or floats'}
                 return make_response(jsonify(response)), 401
@@ -85,22 +85,23 @@ class ItemOps(MethodView):
             response = {'message': 'Please provide all required the details.'}
             return make_response(jsonify(response)), 400
 
-    def get(self, list_id):
+    @staticmethod
+    def get(list_id):
         """
         GET - Retrieves all items belonging to a specific shopping list
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -157,28 +158,30 @@ class ItemMan(MethodView):
     """
     Handles shopping list item manipulation operations
     """
-    def get(self, list_id, item_id):
+    @staticmethod
+    def get(list_id, item_id):
         """
         Retrieves a specific item
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
                 int(item_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             # Retrieve a shopping list item using it's id
             shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
-            shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
+            shopping_list_item = \
+                ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
             if not shopping_list or not shopping_list_item:
                 response = {"message": "That shopping list or item is not yours or does not exist"}
@@ -197,28 +200,30 @@ class ItemMan(MethodView):
                 response.status_code = 201
                 return response
 
-    def put(self, list_id, item_id):
+    @staticmethod
+    def put(list_id, item_id):
         """
         Updates a specific item
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(list_id)
                 int(item_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             # retrieve a shopping list item using it's id
             shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
-            shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
+            shopping_list_item = \
+                ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
             if not shopping_list or not shopping_list_item:
                 response = {"message": "That shopping list or item is not yours or does not exist"}
@@ -266,28 +271,30 @@ class ItemMan(MethodView):
                     response.status_code = 201
                     return response
 
-    def delete(self, list_id, item_id):
+    @staticmethod
+    def delete(list_id, item_id):
         """
         Deletes a specific item
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 list_id = int(list_id)
                 item_id = int(item_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
 
             # retrieve a shopping list item using it's id
             shopping_list = ShoppingList.query.filter_by(id=list_id, user_id=user_id).first()
-            shopping_list_item = ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
+            shopping_list_item = \
+                ShoppingListItem.query.filter_by(id=item_id, list_id=list_id).first()
 
             if not shopping_list or not shopping_list_item:
                 response = {"message": "That shopping list or item is not yours or does not exist"}
@@ -299,8 +306,8 @@ class ItemMan(MethodView):
                 return make_response(jsonify(response)), 200
 
 
-item_ops = ItemOps.as_view('item_ops')
-item_man = ItemMan.as_view('item_man')
+item_ops = ItemOps.as_view('item_ops')  # pylint: disable=invalid-name
+item_man = ItemMan.as_view('item_man')  # pylint: disable=invalid-name
 
 
 # Define rules

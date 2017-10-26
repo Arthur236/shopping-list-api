@@ -37,7 +37,7 @@ def create_app(config_name):
     """
     Initialize the application
     """
-    from app.models import User, ShoppingList, ShoppingListItem, PasswordReset, Friend, SharedList
+    from .models import User
 
     app = FlaskAPI(__name__, instance_relative_config=True)
     app.config.from_object(app_config[config_name])
@@ -47,7 +47,7 @@ def create_app(config_name):
     db.init_app(app)
 
     @app.before_first_request
-    def insert_initial_user(*args, **kwargs):
+    def dummy_insert_initial_user(*_args, **_kwargs):
         """
         Add admin user when tables are migrated
         """
@@ -60,7 +60,7 @@ def create_app(config_name):
             admin_user.save()
 
     @app.errorhandler(404)
-    def error_404(error):
+    def dummy_error_404(_error):
         """
         Handles 404 errors
         """
@@ -74,7 +74,7 @@ def create_app(config_name):
         return response
 
     @app.errorhandler(500)
-    def error_500(error):
+    def dummy_error_500(_error):
         """
         Handles 500 errors
         """
@@ -89,7 +89,7 @@ def create_app(config_name):
         return response
 
     @app.route('/', methods=['GET'])
-    def index():
+    def dummy_index():
         """
         Redirect user to api documentation
         """

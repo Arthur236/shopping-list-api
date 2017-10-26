@@ -1,31 +1,31 @@
 """
 Views for the user blueprint
 """
-from . import user_blueprint
-
 import re
 from flask.views import MethodView
 from flask import request, jsonify, make_response
 from flask_bcrypt import Bcrypt
-from app.models import User
-from app.decorators import MyDecorator
-md = MyDecorator()
+from . import user_blueprint
+from ..models import User
+from ..decorators import MyDecorator
+my_dec = MyDecorator()
 
 
 class SearchUser(MethodView):
     """
     Handles searching of users
     """
-    def get(self):
+    @staticmethod
+    def get():
         """
         GET request to search users
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
 
@@ -60,20 +60,21 @@ class UserProfile(MethodView):
     """
     Handles user profile operations
     """
-    def get(self, u_id):
+    @staticmethod
+    def get(u_id):
         """
         Loads user profile
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(u_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -93,20 +94,21 @@ class UserProfile(MethodView):
             response.status_code = 200
             return response
 
-    def put(self, u_id):
+    @staticmethod
+    def put(u_id):
         """
         Updates user profile
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(u_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -117,8 +119,8 @@ class UserProfile(MethodView):
 
             user = User.query.filter_by(id=user_id).first()
 
-            username = str(request.data.get('username', '')) if str(request.data.get('username', '')) \
-                else user.username
+            username = str(request.data.get('username', '')) if \
+                str(request.data.get('username', '')) else user.username
             email = str(request.data.get('email', '')) if \
                 str(request.data.get('email', '')) else user.email
             password = str(request.data.get('password', '')) if \
@@ -132,7 +134,7 @@ class UserProfile(MethodView):
                     }
                     return make_response(jsonify(response)), 400
 
-                email_resp = md.validate_email(email)
+                email_resp = my_dec.validate_email(email)
                 if not email_resp:
                     response = {'message': 'The email is not valid'}
                     return make_response(jsonify(response)), 400
@@ -145,9 +147,9 @@ class UserProfile(MethodView):
 
                 users = User.query.all()
 
-                for us in users:
+                for user_ob in users:
                     # Check if user exists
-                    if str(user.id) != str(us.id) and email.lower() == us.email.lower():
+                    if str(user.id) != str(user_ob.id) and email.lower() == user_ob.email.lower():
                         response = {"message": "That user already exists"}
                         return make_response(jsonify(response)), 401
 
@@ -166,20 +168,21 @@ class UserProfile(MethodView):
                 response.status_code = 200
                 return response
 
-    def delete(self, u_id):
+    @staticmethod
+    def delete(u_id):
         """
         Deletes a user profile
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(u_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -196,8 +199,8 @@ class UserProfile(MethodView):
             return make_response(jsonify(response)), 200
 
 
-search_user_view = SearchUser.as_view('search_user_view')
-user_profile_view = UserProfile.as_view('user_profile_view')
+search_user_view = SearchUser.as_view('search_user_view')  # pylint: disable=invalid-name
+user_profile_view = UserProfile.as_view('user_profile_view')  # pylint: disable=invalid-name
 
 # Define rules
 user_blueprint.add_url_rule('/users', view_func=search_user_view, methods=['GET'])

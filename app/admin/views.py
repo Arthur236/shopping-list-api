@@ -1,84 +1,58 @@
 """
 Views for the admin blueprint
 """
-from . import admin_blueprint
-
 from flask.views import MethodView
 from flask import request, jsonify, make_response
 from app import db
+from . import admin_blueprint
 from ..models import User
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class GetAllUsers(MethodView):
     """
     Handles getting all users
     """
-    def get(self):
+    @staticmethod
+    def get():
         """
         Retrieves all registered users
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
-        else:
-            user = User.query.filter_by(id=user_id).first()
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
 
-            if not user.admin:
-                response = {'message': 'Cannot perform that operation without admin rights'}
-                return make_response(jsonify(response)), 403
+        user = User.query.filter_by(id=user_id).first()
 
-            search_query = request.args.get("q")
-            try:
-                limit = int(request.args.get('limit', 10))
-                page = int(request.args.get('page', 1))
-            except ValueError:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameters provided should be integers'}
-                return make_response(jsonify(response)), 401
+        if not user.admin:
+            response = {'message': 'Cannot perform that operation without admin rights'}
+            return make_response(jsonify(response)), 403
 
-            if search_query:
-                # if parameter q is specified
-                result = User.query.\
-                    filter(User.username.ilike('%' + search_query + '%')).\
-                    filter_by(admin=False).all()
-                output = []
+        search_query = request.args.get("q")
+        try:
+            limit = int(request.args.get('limit', 10))
+            page = int(request.args.get('page', 1))
+        except (ValueError, TypeError):
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameters provided should be integers'}
+            return make_response(jsonify(response)), 401
 
-                if not result:
-                    response = {'message': 'No users matching the criteria were found'}
-                    return make_response(jsonify(response)), 404
+        if search_query:
+            # if parameter q is specified
+            result = User.query.\
+                filter(User.username.ilike('%' + search_query + '%')).\
+                filter_by(admin=False).all()
+            output = []
 
-                for user in result:
-                    if user.id == user_id:
-                        continue
-                    else:
-                        obj = {
-                            'id': user.id,
-                            'username': user.username,
-                            'email': user.email,
-                            'date_created': user.date_created,
-                            'date_modified': user.date_modified
-                        }
-                        output.append(obj)
-
-                response = jsonify(output)
-                response.status_code = 200
-                return response
-
-            users = []
-            paginated_users = User.query.filter(User.id != user_id).\
-                filter_by(admin=False).\
-                order_by(User.username.asc()).paginate(page, limit)
-
-            if not paginated_users.items:
-                response = {'message': 'No users were found'}
+            if not result:
+                response = {'message': 'No users matching the criteria were found'}
                 return make_response(jsonify(response)), 404
 
-            for user in paginated_users.items:
+            for user in result:
                 if user.id == user_id:
                     continue
                 else:
@@ -89,72 +63,100 @@ class GetAllUsers(MethodView):
                         'date_created': user.date_created,
                         'date_modified': user.date_modified
                     }
-                    users.append(obj)
+                    output.append(obj)
 
-            response = jsonify(users)
+            response = jsonify(output)
             response.status_code = 200
             return response
+
+        users = []
+        paginated_users = User.query.filter(User.id != user_id).\
+            filter_by(admin=False).\
+            order_by(User.username.asc()).paginate(page, limit)
+
+        if not paginated_users.items:
+            response = {'message': 'No users were found'}
+            return make_response(jsonify(response)), 404
+
+        for user in paginated_users.items:
+            if user.id == user_id:
+                continue
+            else:
+                obj = {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                    'date_created': user.date_created,
+                    'date_modified': user.date_modified
+                }
+                users.append(obj)
+
+        response = jsonify(users)
+        response.status_code = 200
+        return response
 
 
 class GetUser(MethodView):
     """
     Handles getting a specific user
     """
-    def get(self, u_id):
+    @staticmethod
+    def get(u_id):
         """
         Retrieves a specific user
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
-        else:
-            try:
-                int(u_id)
-            except ValueError:
-                # An error occurred, therefore return a string message containing the error
-                response = {'message': 'The parameter provided should be an integer'}
-                return make_response(jsonify(response)), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
 
-            user = User.query.filter_by(id=user_id).first()
+        try:
+            int(u_id)
+        except (ValueError, TypeError):
+            # An error occurred, therefore return a string message containing the error
+            response = {'message': 'The parameter provided should be an integer'}
+            return make_response(jsonify(response)), 401
 
-            if not user.admin:
-                response = {'message': 'Cannot perform that operation without admin rights'}
-                return make_response(jsonify(response)), 403
+        user = User.query.filter_by(id=user_id).first()
 
-            user = User.query.filter_by(id=u_id).first()
+        if not user.admin:
+            response = {'message': 'Cannot perform that operation without admin rights'}
+            return make_response(jsonify(response)), 403
 
-            if not user:
-                response = {'message': 'User does not exist'}
-                return make_response(jsonify(response)), 404
+        user = User.query.filter_by(id=u_id).first()
 
-            user = {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-                'date_created': user.date_created,
-                'date_modified': user.date_modified
-            }
-            response = jsonify(user)
-            response.status_code = 200
-            return response
+        if not user:
+            response = {'message': 'User does not exist'}
+            return make_response(jsonify(response)), 404
 
-    def delete(self, u_id):
+        user = {
+            'id': user.id,
+            'username': user.username,
+            'email': user.email,
+            'date_created': user.date_created,
+            'date_modified': user.date_modified
+        }
+        response = jsonify(user)
+        response.status_code = 200
+        return response
+
+    @staticmethod
+    def delete(u_id):
         """
         Deletes a specific user
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(u_id)
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter provided should be an integer'}
                 return make_response(jsonify(response)), 401
@@ -182,8 +184,8 @@ class GetUser(MethodView):
             return make_response(jsonify(response)), 200
 
 
-get_users_view = GetAllUsers.as_view('get_users_view')
-get_user_view = GetUser.as_view('get_user_view')
+get_users_view = GetAllUsers.as_view('get_users_view')  # pylint: disable=invalid-name
+get_user_view = GetUser.as_view('get_user_view')  # pylint: disable=invalid-name
 
 # Define rules
 admin_blueprint.add_url_rule('/admin/users', view_func=get_users_view, methods=['GET'])

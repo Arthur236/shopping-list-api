@@ -1,34 +1,35 @@
 """
 Views for the friend blueprint
 """
-from . import friend_blueprint
-
 from flask.views import MethodView
 from flask import request, jsonify, make_response
+from sqlalchemy.sql.expression import false
 from sqlalchemy import and_, or_
+from . import friend_blueprint
 from ..models import Friend, User
 from ..decorators import MyDecorator
-md = MyDecorator()
+my_dec = MyDecorator()
 
 
 class FriendOps(MethodView):
     """
     Handles sending friend requests and showing friends
     """
-    def post(self):
+    @staticmethod
+    def post():
         """
         POST - Sends a friend request to a user
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 friend_id = int(request.data.get('friend_id', ''))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -62,22 +63,23 @@ class FriendOps(MethodView):
                 response = {'message': 'Friend request already sent'}
                 return make_response(jsonify(response)), 401
 
-    def get(self):
+    @staticmethod
+    def get():
         """
         GET - Retrieves all of a user's friends
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -145,20 +147,21 @@ class FriendMan(MethodView):
     """
     Handles friend manipulation
     """
-    def put(self, friend_id):
+    @staticmethod
+    def put(friend_id):
         """
         Handles acceptance of friend requests
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(friend_id)
-            except Exception as e:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameter needs to be an integer'}
                 return make_response(jsonify(response)), 401
@@ -179,20 +182,21 @@ class FriendMan(MethodView):
             response = {'message': 'You are now friends'}
             return make_response(jsonify(response)), 200
 
-    def delete(self, friend_id):
+    @staticmethod
+    def delete(friend_id):
         """
         Removes a user as a friend
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             try:
                 int(friend_id)
-            except Exception as e:
+            except (ValueError, TypeError) as e:
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': str(e)}
                 return make_response(jsonify(response)), 401
@@ -217,22 +221,23 @@ class FRequest(MethodView):
     """
     Handles friend requests
     """
-    def get(self):
+    @staticmethod
+    def get():
         """
         Removes a user as a friend
         """
-        user_id = md.check_token()
+        user_id = my_dec.check_token()
 
         if user_id == 'Missing':
-            return jsonify({'message': 'Token is missing!'}), 401
+            return jsonify({'message': 'You cannot access that page without a token.'}), 401
         elif user_id == 'Invalid':
-            return jsonify({'message': 'Token is invalid!'}), 401
+            return jsonify({'message': 'Your token is either expired or invalid.'}), 401
         else:
             search_query = request.args.get("q")
             try:
                 limit = int(request.args.get('limit', 10))
                 page = int(request.args.get('page', 1))
-            except ValueError:
+            except (ValueError, TypeError):
                 # An error occurred, therefore return a string message containing the error
                 response = {'message': 'The parameters provided should be integers'}
                 return make_response(jsonify(response)), 401
@@ -245,7 +250,7 @@ class FRequest(MethodView):
                 for r_fr in result:
                     output = Friend.query. \
                         filter(and_(Friend.user1 == r_fr.id, Friend.user2 == user_id,
-                                    Friend.accepted == False)).first()
+                                    Friend.accepted == false())).first()
                     if output:
                         search_output.append(output.user2)
 
@@ -268,7 +273,7 @@ class FRequest(MethodView):
             friends = []
             friend_ids = []
             friend_list = Friend.query. \
-                filter(and_(Friend.user2 == user_id, Friend.accepted == False)).all()
+                filter(and_(Friend.user2 == user_id, Friend.accepted == false())).all()
 
             if not friend_list:
                 response = {'message': 'You have no friend requests'}
@@ -292,9 +297,9 @@ class FRequest(MethodView):
             return response
 
 
-friend_ops = FriendOps.as_view('friend_ops')
-friend_man = FriendMan.as_view('friend_man')
-request_op = FRequest.as_view('request_op')
+friend_ops = FriendOps.as_view('friend_ops')  # pylint: disable=invalid-name
+friend_man = FriendMan.as_view('friend_man')  # pylint: disable=invalid-name
+request_op = FRequest.as_view('request_op')  # pylint: disable=invalid-name
 
 # Define rules
 friend_blueprint.add_url_rule('/friends',
