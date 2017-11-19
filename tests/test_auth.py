@@ -115,7 +115,7 @@ class AuthTestCase(TestCase):
         result = json.loads(login_res.data.decode())
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
-        self.assertTrue(result['access-token'])
+        self.assertTrue(result['access_token'])
 
     def login_user(self, user):
         """
@@ -123,7 +123,7 @@ class AuthTestCase(TestCase):
         """
         self.create_user(user)
         login_res = self.client.post('/v1/auth/login', data=user)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         return access_token
 
@@ -215,7 +215,7 @@ class AuthTestCase(TestCase):
         result = json.loads(login_res.data.decode())
         # Assert that the status code is equal to 200
         self.assertEqual(login_res.status_code, 200)
-        self.assertTrue(result['access-token'])
+        self.assertTrue(result['access_token'])
 
     def test_wrong_pass_reset_token(self):
         """

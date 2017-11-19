@@ -92,7 +92,7 @@ class LoginView(MethodView):
                                    current_app.config.get('SECRET'))
                 if token:
                     response = {
-                        'access-token': token.decode('UTF-8'),
+                        'access_token': token.decode('UTF-8'),
                         'message': 'You logged in successfully.'
                     }
                     return make_response(jsonify(response)), 200

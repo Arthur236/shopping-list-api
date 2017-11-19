@@ -56,7 +56,7 @@ class AuthTestCase(TestCase):
         Helper function to login users
         """
         login_res = self.client.post('/v1/auth/login', data=user)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         return access_token
 
@@ -92,7 +92,7 @@ class AuthTestCase(TestCase):
         """
         self.login_user(self.admin)
         login_res = self.client.post('/v1/auth/login', data=self.user2)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         # Get all the users by making a GET request
         res = self.client.get('/v1/admin/users', headers={'x-access-token': access_token})
@@ -172,7 +172,7 @@ class AuthTestCase(TestCase):
         """
         self.login_user(self.admin)
         login_res = self.client.post('/v1/auth/login', data=self.user2)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         res = self.client.get('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
@@ -197,7 +197,7 @@ class AuthTestCase(TestCase):
         """
         self.login_user(self.admin)
         login_res = self.client.post('/v1/auth/login', data=self.user2)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         res = self.client.delete('/v1/admin/users/2', headers={'x-access-token': access_token})
         self.assertEqual(res.status_code, 403)
@@ -260,7 +260,7 @@ class AuthTestCase(TestCase):
         Try to get paginated users when none exist
         """
         login_res = self.client.post('/v1/auth/login', data=self.admin)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         # Delete users
         self.client.delete('/v1/admin/users/2', headers={'x-access-token': access_token})

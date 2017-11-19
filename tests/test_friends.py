@@ -51,7 +51,7 @@ class FriendTestCase(TestCase):
         Helper function to login users
         """
         login_res = self.client.post('/v1/auth/login', data=user)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         return access_token
 
@@ -142,7 +142,7 @@ class FriendTestCase(TestCase):
 
         # Login as other user
         login_res = self.client.post('/v1/auth/login', data=self.user2)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         return access_token
 

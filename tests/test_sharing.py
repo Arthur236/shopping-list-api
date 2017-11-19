@@ -53,7 +53,7 @@ class ShareTestCase(TestCase):
 
         # Create list for user 1 and add items
         login_res = self.client.post('/v1/auth/login', data=self.user1)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
         self.client.post('/v1/shopping_lists', headers={'x-access-token': access_token},
                          data=self.shopping_list)
         self.client.post('/v1/shopping_lists', headers={'x-access-token': access_token},
@@ -73,7 +73,7 @@ class ShareTestCase(TestCase):
 
         # Accept request
         login_res = self.client.post('/v1/auth/login', data=self.user2)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
         self.client.put('/v1/friends/2',
                         headers={'x-access-token': access_token})
 
@@ -89,7 +89,7 @@ class ShareTestCase(TestCase):
         Helper function to login user
         """
         login_res = self.client.post('/v1/auth/login', data=user)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
 
         return access_token
 
@@ -309,7 +309,7 @@ class ShareTestCase(TestCase):
         """
         # Delete items
         login_res = self.client.post('/v1/auth/login', data=self.user1)
-        access_token = json.loads(login_res.data.decode())['access-token']
+        access_token = json.loads(login_res.data.decode())['access_token']
         self.client.delete('/v1/shopping_lists/1/items/1',
                            headers={'x-access-token': access_token})
         self.client.delete('/v1/shopping_lists/1/items/2',
