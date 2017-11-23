@@ -126,9 +126,24 @@ class SListOps(MethodView):
                     'date_modified': shopping_list.date_modified
                 }
                 results.append(obj)
-            response = jsonify(results)
-            response.status_code = 200
-            return response
+
+            next_page = 'None'
+            previous_page = 'None'
+
+            if paginated_lists.has_next:
+                next_page = '/shopping_lists/' + '?page=' + str(page + 1) + \
+                            '&limit=' + str(limit)
+            if paginated_lists.has_prev:
+                previous_page = '/shopping_lists/' + '?page=' + str(page - 1) + \
+                            '&limit=' + str(limit)
+
+            response = {
+                'previous_page': previous_page,
+                'next_page': next_page,
+                'shopping_lists': results
+            }
+
+            return make_response(jsonify(response)), 200
 
 
 class SListMan(MethodView):
