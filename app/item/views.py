@@ -137,7 +137,7 @@ class ItemOps(MethodView):
 
             if not paginated_items.items:
                 response = {'message': 'That list has no items'}
-                return make_response(jsonify(response)), 404
+                return make_response(jsonify(response)), 200
 
             for shopping_list_item in paginated_items.items:
                 obj = {
@@ -212,7 +212,7 @@ class ItemMan(MethodView):
                     'date_created': shopping_list_item.date_created,
                     'date_modified': shopping_list_item.date_modified
                 })
-                response.status_code = 201
+                response.status_code = 200
                 return response
 
     @staticmethod
@@ -283,7 +283,7 @@ class ItemMan(MethodView):
                         'date_created': shopping_list_item.date_created,
                         'date_modified': shopping_list_item.date_modified
                     })
-                    response.status_code = 201
+                    response.status_code = 200
                     return response
 
     @staticmethod
