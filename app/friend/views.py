@@ -107,6 +107,7 @@ class FriendOps(MethodView):
                 for friend in search_output:
                     user = User.query.filter_by(id=friend).first()
                     obj = {
+                        'id': user.id,
                         'username': user.username,
                         'email': user.email
                     }
@@ -133,6 +134,7 @@ class FriendOps(MethodView):
 
             for user in paginated_users.items:
                 obj = {
+                    'id': user.id,
                     'username': user.username,
                     'email': user.email
                 }
@@ -275,6 +277,7 @@ class FRequest(MethodView):
                 for friend in search_output:
                     user = User.query.filter_by(id=friend).first()
                     obj = {
+                        'id': user.id,
                         'username': user.username,
                         'email': user.email
                     }
@@ -301,6 +304,7 @@ class FRequest(MethodView):
 
             for user in paginated_users.items:
                 obj = {
+                    'id': user.id,
                     'username': user.username,
                     'email': user.email
                 }

@@ -45,6 +45,7 @@ class SearchUser(MethodView):
                         continue
                     else:
                         obj = {
+                            'id': user.id,
                             'username': user.username,
                             'date_created': user.date_created,
                             'date_modified': user.date_modified
@@ -86,6 +87,7 @@ class UserProfile(MethodView):
                 return make_response(jsonify(response)), 404
 
             user = {
+                'id': user.id,
                 'username': user.username,
                 'date_created': user.date_created,
                 'date_modified': user.date_modified
@@ -160,6 +162,7 @@ class UserProfile(MethodView):
                 user.save()
 
                 response = jsonify({
+                    'id': user.id,
                     'username': user.username,
                     'email': user.email,
                     'date_created': user.date_created,
