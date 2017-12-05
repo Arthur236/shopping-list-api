@@ -127,6 +127,7 @@ class ItemOps(MethodView):
                         'date_modified': list_item.date_modified
                     }
                     output.append(obj)
+
                 response = jsonify(output)
                 response.status_code = 200
                 return response

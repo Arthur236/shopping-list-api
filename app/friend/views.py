@@ -138,9 +138,23 @@ class FriendOps(MethodView):
                 }
                 friends.append(obj)
 
-            response = jsonify(friends)
-            response.status_code = 200
-            return response
+            next_page = 'None'
+            previous_page = 'None'
+
+            if paginated_users.has_next:
+                next_page = '/friends' + '?page=' + str(page + 1) + \
+                            '&limit=' + str(limit)
+            if paginated_users.has_prev:
+                previous_page = '/friends' + '?page=' + str(page - 1) + \
+                                '&limit=' + str(limit)
+
+            response = {
+                'previous_page': previous_page,
+                'next_page': next_page,
+                'friends': friends
+            }
+
+            return make_response(jsonify(response)), 200
 
 
 class FriendMan(MethodView):
@@ -224,7 +238,7 @@ class FRequest(MethodView):
     @staticmethod
     def get():
         """
-        Removes a user as a friend
+        Get friend requests
         """
         user_id = my_dec.check_token()
 
@@ -280,7 +294,7 @@ class FRequest(MethodView):
                 return make_response(jsonify(response)), 404
 
             for friend in friend_list:
-                friend_ids.append(friend.user2)
+                friend_ids.append(friend.user1)
 
             paginated_users = User.query.filter(User.id.in_(friend_ids)). \
                 order_by(User.username.asc()).paginate(page, limit)
@@ -292,9 +306,23 @@ class FRequest(MethodView):
                 }
                 friends.append(obj)
 
-            response = jsonify(friends)
-            response.status_code = 200
-            return response
+            next_page = 'None'
+            previous_page = 'None'
+
+            if paginated_users.has_next:
+                next_page = '/friends/requests' + '?page=' + str(page + 1) + \
+                            '&limit=' + str(limit)
+            if paginated_users.has_prev:
+                previous_page = '/friends/requests' + '?page=' + str(page - 1) + \
+                                '&limit=' + str(limit)
+
+            response = {
+                'previous_page': previous_page,
+                'next_page': next_page,
+                'friend_requests': friends
+            }
+
+            return make_response(jsonify(response)), 200
 
 
 friend_ops = FriendOps.as_view('friend_ops')  # pylint: disable=invalid-name

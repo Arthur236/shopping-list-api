@@ -253,7 +253,7 @@ class ShoppingListTestCase(TestCase):
 
         res = self.client.get('/v1/shopping_lists/1/items?page=1&limit=2',
                               headers={'x-access-token': access_token})
-        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.status_code, 200)
 
     def test_get_paginated_items(self):
         """
@@ -287,7 +287,7 @@ class ShoppingListTestCase(TestCase):
         result = self.client.get('/v1/shopping_lists/1/items/{}'.format(results['id']),
                                  headers={'x-access-token': access_token})
         # Assert that the shopping list item is actually returned given its ID
-        self.assertEqual(result.status_code, 201)
+        self.assertEqual(result.status_code, 200)
 
     def test_get_item_token_correct(self):
         """
@@ -335,7 +335,7 @@ class ShoppingListTestCase(TestCase):
                              data={
                                  "name": "Oranges", "quantity": 2, "unit_price": 20
                              })
-        self.assertEqual(rv.status_code, 201)
+        self.assertEqual(rv.status_code, 200)
 
     def test_item_edit_token_correct(self):
         """
