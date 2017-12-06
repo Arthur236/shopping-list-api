@@ -127,7 +127,10 @@ class FriendOps(MethodView):
                 return make_response(jsonify(response)), 404
 
             for friend in friend_list:
-                friend_ids.append(friend.user2)
+                if not friend.user1 == user_id:
+                    friend_ids.append(friend.user1)
+                if not friend.user2 == user_id:
+                    friend_ids.append(friend.user2)
 
             paginated_users = User.query.filter(User.id.in_(friend_ids)). \
                 order_by(User.username.asc()).paginate(page, limit)
