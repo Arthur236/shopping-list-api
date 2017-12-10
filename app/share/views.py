@@ -130,7 +130,11 @@ class ShareOps(MethodView):
             for sha_list in paginated_lists.items:
                 obj = {
                     'id': sha_list.id,
-                    'name': sha_list.name
+                    'name': sha_list.name,
+                    'description': sha_list.description,
+                    'date_created': sha_list.date_created,
+                    'date_modified': sha_list.date_modified
+
                 }
                 shared_lists.append(obj)
 
