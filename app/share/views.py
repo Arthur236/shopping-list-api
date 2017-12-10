@@ -134,9 +134,23 @@ class ShareOps(MethodView):
                 }
                 shared_lists.append(obj)
 
-            response = jsonify(shared_lists)
-            response.status_code = 200
-            return response
+            next_page = 'None'
+            previous_page = 'None'
+
+            if paginated_lists.has_next:
+                next_page = '/shopping_lists/share' + '?page=' + str(page + 1) + \
+                            '&limit=' + str(limit)
+            if paginated_lists.has_prev:
+                previous_page = '/shopping_lists/share' + '?page=' + str(page - 1) + \
+                                '&limit=' + str(limit)
+
+            response = {
+                'previous_page': previous_page,
+                'next_page': next_page,
+                'shared_lists': shared_lists
+            }
+
+            return make_response(jsonify(response)), 200
 
 
 class ShareMan(MethodView):
@@ -269,9 +283,24 @@ class ShareItems(MethodView):
                     'date_modified': shopping_list_item.date_modified
                 }
                 results.append(obj)
-            response = jsonify(results)
-            response.status_code = 200
-            return response
+
+            next_page = 'None'
+            previous_page = 'None'
+
+            if paginated_items.has_next:
+                next_page = '/shopping_lists/share/<list_id>/items' + '?page=' + str(page + 1) + \
+                            '&limit=' + str(limit)
+            if paginated_items.has_prev:
+                previous_page = '/shopping_lists/share/<list_id>/items' + '?page=' + str(page - 1) + \
+                                '&limit=' + str(limit)
+
+            response = {
+                'previous_page': previous_page,
+                'next_page': next_page,
+                'shared_list_items': results
+            }
+
+            return make_response(jsonify(response)), 200
 
 
 share_ops = ShareOps.as_view('share_ops')  # pylint: disable=invalid-name
