@@ -199,6 +199,16 @@ class ShareMan(MethodView):
                     response = {'message': 'List sharing stopped successfully'}
                     return make_response(jsonify(response)), 200
 
+                if friend_id == user_id:
+                    shared_list = SharedList.query.filter(SharedList.user1 == user_id).filter_by(list_id=list_id).all()
+
+                    if shared_list:
+                        for s_list in shared_list:
+                            s_list.delete()
+
+                        response = {'message': 'List sharing stopped successfully'}
+                        return make_response(jsonify(response)), 200
+
                 response = {'message': 'That list has not been shared'}
                 return make_response(jsonify(response)), 404
 
