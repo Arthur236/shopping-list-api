@@ -124,6 +124,7 @@ class ShareOps(MethodView):
             for s_list in shared_list:
                 shared_lists_ids.append(s_list.list_id)
 
+            total_lists = ShoppingList.query.filter(ShoppingList.id.in_(shared_lists_ids)).count()
             paginated_lists = ShoppingList.query.filter(ShoppingList.id.in_(shared_lists_ids)).\
                 order_by(ShoppingList.name.asc()).paginate(page, limit)
 
@@ -149,6 +150,7 @@ class ShareOps(MethodView):
                                 '&limit=' + str(limit)
 
             response = {
+                'total': total_lists,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'shared_lists': shared_lists
@@ -279,6 +281,7 @@ class ShareItems(MethodView):
                 response.status_code = 200
                 return response
 
+            total_items = ShoppingListItem.query.filter_by(list_id=list_id).count()
             paginated_items = ShoppingListItem.query.filter_by(list_id=list_id). \
                 order_by(ShoppingListItem.name.asc()).paginate(page, limit)
             results = []
@@ -309,6 +312,7 @@ class ShareItems(MethodView):
                                 '&limit=' + str(limit)
 
             response = {
+                'total': total_items,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'shared_list_items': results

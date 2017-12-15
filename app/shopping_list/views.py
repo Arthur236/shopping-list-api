@@ -109,6 +109,7 @@ class SListOps(MethodView):
                 response.status_code = 200
                 return response
 
+            total_lists = ShoppingList.query.filter_by(user_id=user_id).count()
             paginated_lists = ShoppingList.query.filter_by(user_id=user_id). \
                 order_by(ShoppingList.name.asc()).paginate(page, limit)
             results = []
@@ -131,13 +132,14 @@ class SListOps(MethodView):
             previous_page = 'None'
 
             if paginated_lists.has_next:
-                next_page = '/shopping_lists/' + '?page=' + str(page + 1) + \
+                next_page = '/shopping_lists' + '?page=' + str(page + 1) + \
                             '&limit=' + str(limit)
             if paginated_lists.has_prev:
-                previous_page = '/shopping_lists/' + '?page=' + str(page - 1) + \
+                previous_page = '/shopping_lists' + '?page=' + str(page - 1) + \
                             '&limit=' + str(limit)
 
             response = {
+                'total': total_lists,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'shopping_lists': results

@@ -70,6 +70,8 @@ class GetAllUsers(MethodView):
             return response
 
         users = []
+        total_users = User.query.filter(User.id != user_id).\
+            filter_by(admin=False).count()
         paginated_users = User.query.filter(User.id != user_id).\
             filter_by(admin=False).\
             order_by(User.username.asc()).paginate(page, limit)
@@ -91,9 +93,24 @@ class GetAllUsers(MethodView):
                 }
                 users.append(obj)
 
-        response = jsonify(users)
-        response.status_code = 200
-        return response
+        next_page = 'None'
+        previous_page = 'None'
+
+        if paginated_users.has_next:
+            next_page = '/admin/users' + '?page=' + str(page + 1) + \
+                        '&limit=' + str(limit)
+        if paginated_users.has_prev:
+            previous_page = '/admin/users' + '?page=' + str(page - 1) + \
+                            '&limit=' + str(limit)
+
+        response = {
+            'total': total_users,
+            'previous_page': previous_page,
+            'next_page': next_page,
+            'users': users
+        }
+
+        return make_response(jsonify(response)), 200
 
 
 class GetUser(MethodView):

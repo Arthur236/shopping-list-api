@@ -132,6 +132,7 @@ class ItemOps(MethodView):
                 response.status_code = 200
                 return response
 
+            total_items = ShoppingListItem.query.filter_by(list_id=list_id).count()
             paginated_items = ShoppingListItem.query.filter_by(list_id=list_id). \
                 order_by(ShoppingListItem.name.asc()).paginate(page, limit)
             results = []
@@ -162,6 +163,7 @@ class ItemOps(MethodView):
                                 '&limit=' + str(limit)
 
             response = {
+                'total': total_items,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'shopping_list_items': results

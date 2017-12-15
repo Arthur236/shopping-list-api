@@ -132,6 +132,7 @@ class FriendOps(MethodView):
                 if not friend.user2 == user_id:
                     friend_ids.append(friend.user2)
 
+            total_users = User.query.filter(User.id.in_(friend_ids)).count()
             paginated_users = User.query.filter(User.id.in_(friend_ids)). \
                 order_by(User.username.asc()).paginate(page, limit)
 
@@ -154,6 +155,7 @@ class FriendOps(MethodView):
                                 '&limit=' + str(limit)
 
             response = {
+                'total': total_users,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'friends': friends
@@ -302,6 +304,7 @@ class FRequest(MethodView):
             for friend in friend_list:
                 friend_ids.append(friend.user1)
 
+            total_users = User.query.filter(User.id.in_(friend_ids)).count()
             paginated_users = User.query.filter(User.id.in_(friend_ids)). \
                 order_by(User.username.asc()).paginate(page, limit)
 
@@ -324,6 +327,7 @@ class FRequest(MethodView):
                                 '&limit=' + str(limit)
 
             response = {
+                'total': total_users,
                 'previous_page': previous_page,
                 'next_page': next_page,
                 'friend_requests': friends
