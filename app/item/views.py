@@ -57,6 +57,12 @@ class ItemOps(MethodView):
                     }
                     return make_response(jsonify(response)), 400
 
+                if quantity < 0 or unit_price < 0:
+                    response = {
+                        'message': 'The values should be positive numbers'
+                    }
+                    return make_response(jsonify(response)), 400
+
                 s_list_item = ShoppingListItem.query.\
                     filter(func.lower(ShoppingListItem.name) == name.lower(),
                            ShoppingListItem.list_id == list_id).first()
@@ -259,6 +265,12 @@ class ItemMan(MethodView):
                     response = {
                         'message': 'The item name cannot contain special characters. '
                                    'Only underscores'
+                    }
+                    return make_response(jsonify(response)), 400
+
+                if quantity < 0 or unit_price < 0:
+                    response = {
+                        'message': 'The values should be positive numbers'
                     }
                     return make_response(jsonify(response)), 400
 
