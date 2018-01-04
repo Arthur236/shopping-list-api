@@ -203,7 +203,7 @@ class AuthTestCase(TestCase):
         res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'],
+        reset_res = self.client.put('/v1/auth/password/' + token['pass_reset_token'],
                                     data={'password': 'pass123'})
         self.assertEqual(reset_res.status_code, 201)
 
@@ -237,7 +237,7 @@ class AuthTestCase(TestCase):
         res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'],
+        reset_res = self.client.put('/v1/auth/password/' + token['pass_reset_token'],
                                     data={'password': 'pass'})
         self.assertEqual(reset_res.status_code, 400)
 
@@ -251,7 +251,7 @@ class AuthTestCase(TestCase):
         res = self.client.post('/v1/auth/reset', data={'email': 'user1@gmail.com'})
         token = json.loads(res.data.decode())
 
-        reset_res = self.client.put('/v1/auth/password/' + token['pass-reset-token'])
+        reset_res = self.client.put('/v1/auth/password/' + token['pass_reset_token'])
         self.assertEqual(reset_res.status_code, 400)
 
     def test_get_profile_id_format(self):

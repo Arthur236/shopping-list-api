@@ -57,7 +57,7 @@ class ItemOps(MethodView):
                     }
                     return make_response(jsonify(response)), 400
 
-                if quantity < 0 or unit_price < 0:
+                if (quantity < 0) or (unit_price < 0):
                     response = {
                         'message': 'The values should be positive numbers'
                     }
@@ -255,10 +255,10 @@ class ItemMan(MethodView):
 
             name = str(request.data.get('name', '')) if str(request.data.get('name', '')) \
                 else shopping_list_item.name
-            quantity = str(request.data.get('quantity', '')) if \
-                str(request.data.get('quantity', '')) else shopping_list_item.quantity
-            unit_price = str(request.data.get('unit_price', '')) if \
-                str(request.data.get('unit_price', '')) else shopping_list_item.unit_price
+            quantity = float(request.data.get('quantity', '')) if \
+                float(request.data.get('quantity', 0.0)) else shopping_list_item.quantity
+            unit_price = float(request.data.get('unit_price', '')) if \
+                float(request.data.get('unit_price', 0.0)) else shopping_list_item.unit_price
 
             if name and quantity and unit_price:
                 if not re.match("^[a-zA-Z0-9 _]*$", name):
@@ -268,7 +268,7 @@ class ItemMan(MethodView):
                     }
                     return make_response(jsonify(response)), 400
 
-                if quantity < 0 or unit_price < 0:
+                if (quantity < 0) or (unit_price < 0):
                     response = {
                         'message': 'The values should be positive numbers'
                     }

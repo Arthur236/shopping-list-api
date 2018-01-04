@@ -11,6 +11,9 @@ from flask_bcrypt import Bcrypt
 from . import auth_blueprint
 from ..models import User, PasswordReset
 from ..decorators import MyDecorator
+from app import mail
+from flask_mail import Message
+
 my_dec = MyDecorator()
 
 
@@ -136,7 +139,17 @@ class ResetView(MethodView):
                     pass_reset = PasswordReset(email=email, token=p_token)
                     pass_reset.save()
 
-                    response = {'pass-reset-token': token.decode('UTF-8')}
+                    # Send email
+                    url = str(current_app.config.get('APP_URL')) + \
+                        '/auth/password/{}'.format(str(token.decode()))
+                    subject = "Reset Password"
+                    message = "<p> Hey {},<br/><br/> Click on the link below to reset your password:</p><br/><b>{}</b>"\
+                        .format(str(email), str(url))
+                    msg = Message(recipients=[email],
+                                  html=message, subject=subject)
+                    mail.send(msg)
+
+                    response = {'pass_reset_token': token.decode('UTF-8')}
                     return make_response(jsonify(response)), 200
             else:
                 # User does not exist. Therefore, we return an error message

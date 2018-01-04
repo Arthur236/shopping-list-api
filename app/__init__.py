@@ -5,12 +5,14 @@ from flask_api import FlaskAPI
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
 from flask import request, jsonify, redirect
+from flask_mail import Mail
 
 # Local import
 from instance.config import app_config
 
 # Initialize sql-alchemy
 db = SQLAlchemy()
+mail = Mail()
 
 
 # Middleware for path prefixing
@@ -48,6 +50,7 @@ def create_app(config_name):
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.wsgi_app = PrefixMiddleware(app.wsgi_app, prefix='/v1')
     db.init_app(app)
+    mail.init_app(app)
 
     @app.before_first_request
     def dummy_insert_initial_user(*_args, **_kwargs):
