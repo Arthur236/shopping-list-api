@@ -91,6 +91,7 @@ class LoginView(MethodView):
             if user and user.password_is_valid(request.data['password']):
                 # Generate the access token. This will be used as the authorization header
                 token = jwt.encode({'id': user.id,
+                                    'username': user.username,
                                     'exp': datetime.utcnow() + timedelta(days=1)},
                                    current_app.config.get('SECRET'))
                 if token:

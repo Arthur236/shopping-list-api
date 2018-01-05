@@ -47,6 +47,7 @@ class SearchUser(MethodView):
                         obj = {
                             'id': user.id,
                             'username': user.username,
+                            'email': user.email,
                             'date_created': user.date_created,
                             'date_modified': user.date_modified
                         }
